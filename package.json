@@ -1,0 +1,19 @@
+{
+  "name": "jsonspecs-node-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Minimal snapshot-only Express validation service for jsonspecs",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "PORT=3000 SNAPSHOT_PATH=./snapshot.json node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "jsonspecs": "^1.1.0"
+  }
+}
