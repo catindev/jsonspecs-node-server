@@ -2,7 +2,11 @@
   "projectId": "nominal-beneficiaries-rules",
   "projectTitle": "Бенефициары ном. счетов (FL_RESIDENT)",
   "builtAt": "2026-03-30T06:27:45.215Z",
-  "jsonspecsVersion": "1.1.0",
+  "snapshotMigratedAt": "2026-07-12T08:16:05Z",
+  "jsonspecsVersion": "2.0.0",
+  "snapshotFormat": "jsonspecs-snapshot",
+  "snapshotFormatVersion": 1,
+  "sourceHash": "d9444d0733786696aaa2e98f6bfae4fedd5804a0b65c36b13645cab1df46c9a5",
   "artifactCount": 188,
   "entrypoints": [
     "entrypoints.fl_resident.full_validation"

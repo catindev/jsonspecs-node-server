@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: jsonspecs-node-server
+    strategy:
+      matrix:
+        node-version: [20, 22]
+    steps:
+      - name: Checkout demo server
+        uses: actions/checkout@v4
+        with:
+          path: jsonspecs-node-server
+      - name: Resolve jsonspecs source ref
+        id: jsonspecs
+        working-directory: jsonspecs-node-server
+        run: echo "ref=$(node -p 'require(\"./package.json\").config.jsonspecsGitRef')" >> "$GITHUB_OUTPUT"
+      - name: Checkout matching jsonspecs source
+        uses: actions/checkout@v4
+        with:
+          repository: catindev/jsonspecs
+          ref: ${{ steps.jsonspecs.outputs.ref }}
+          path: jsonspecs
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: jsonspecs-node-server/package-lock.json
+      - run: npm ci
+      - run: npm test

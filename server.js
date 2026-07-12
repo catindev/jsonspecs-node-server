@@ -1,11 +1,10 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
-const { createEngine } = require("jsonspecs");
+const { createEngine, formatDiagnostics } = require("jsonspecs");
 const { Operators } = require("./lib/operators");
 
 const PORT = Number(process.env.PORT || 3000);
-const TRACE = process.env.TRACE === "1";
 const SNAPSHOT_PATH = process.env.SNAPSHOT_PATH || path.join(__dirname, "snapshot.json");
 
 function failBoot(message) {
@@ -39,7 +38,9 @@ function loadSnapshot(snapshotPath) {
 function bootstrap(snapshotPath) {
   const snapshot = loadSnapshot(snapshotPath);
   const engine = createEngine({ operators: Operators });
-  const compiled = engine.compile(snapshot.artifacts);
+  let compiled;
+  try { compiled = engine.compileSnapshot(snapshot); }
+  catch (error) { failBoot(`Snapshot validation failed: ${error.diagnostics ? formatDiagnostics(error.diagnostics) : error.message}`); }
 
   return {
     engine,
@@ -47,12 +48,12 @@ function bootstrap(snapshotPath) {
     meta: {
       mode: "snapshot",
       snapshotPath,
-      version: snapshot.version || null,
-      createdAt: snapshot.createdAt || null,
-      createdBy: snapshot.createdBy || null,
-      description: snapshot.description || null,
-      artifactCount: snapshot.artifactCount || snapshot.artifacts.length,
-      manifest: snapshot.manifest || null,
+      format: snapshot.format,
+      formatVersion: snapshot.formatVersion,
+      sourceHash: snapshot.sourceHash,
+      description: snapshot.meta && snapshot.meta.description || null,
+      artifactCount: snapshot.artifacts.length,
+      project: snapshot.meta || null,
     },
   };
 }
@@ -70,10 +71,13 @@ function validateRequest(body) {
   if (body.payload !== undefined && (typeof body.payload !== "object" || body.payload === null || Array.isArray(body.payload))) {
     return '"payload" must be an object if provided';
   }
+  if (body.trace !== undefined && body.trace !== false && body.trace !== "basic") {
+    return '"trace" must be false or "basic" if provided';
+  }
   return null;
 }
 
-function createApp({ engine, compiled, meta }) {
+function createApp({ engine, compiled }) {
   const app = express();
 
   app.use(express.json({ limit: "2mb" }));
@@ -86,7 +90,7 @@ function createApp({ engine, compiled, meta }) {
   });
 
   app.get("/health", (_req, res) => {
-    res.json({ ok: true, ...meta });
+    res.json({ ok: true });
   });
 
   app.post("/v1/validate", (req, res) => {
@@ -97,17 +101,12 @@ function createApp({ engine, compiled, meta }) {
 
     const context = req.body.context;
     const payload = req.body.payload ?? {};
-    const enrichedPayload = { ...payload, __context: context };
-
     try {
-      const result = engine.runPipeline(compiled, context.pipelineId, enrichedPayload);
+      const trace = req.body.trace === "basic" ? "basic" : false;
+      const result = engine.runPipeline(compiled, { pipelineId: context.pipelineId, payload, context }, { trace });
       const response = { context, ...result };
 
-      if (!TRACE && response.trace) {
-        const { trace, ...rest } = response;
-        return res.json(rest);
-      }
-      return res.json(response);
+      return res.status(result.status === "ABORT" ? 500 : 200).json(response);
     } catch (error) {
       return res.status(500).json({
         error: true,
@@ -126,7 +125,7 @@ function start() {
   app.listen(PORT, () => {
     console.log(`[jsonspecs-node-server] listening on :${PORT}`);
     console.log(`[jsonspecs-node-server] snapshot      : ${runtime.meta.snapshotPath}`);
-    console.log(`[jsonspecs-node-server] version       : ${runtime.meta.version || "n/a"}`);
+    console.log(`[jsonspecs-node-server] snapshot      : v${runtime.meta.formatVersion}`);
     console.log(`[jsonspecs-node-server] artifacts     : ${runtime.meta.artifactCount}`);
   });
 }
