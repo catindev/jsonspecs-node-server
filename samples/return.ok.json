@@ -1,0 +1,31 @@
+{
+  "context": {
+    "pipelineId": "entrypoints.return.request",
+    "currentDate": "2026-07-12"
+  },
+  "payload": {
+    "customer": {
+      "name": "Иван Петров",
+      "phone": "+79161234567",
+      "email": "ivan@example.com"
+    },
+    "order": {
+      "id": "A-2026-114302",
+      "status": "DELIVERED",
+      "amount": 4250,
+      "returnDeadline": "2026-07-25"
+    },
+    "return": {
+      "reason": "DEFECT",
+      "amount": 1850,
+      "items": [
+        { "sku": "BKS-0987", "category": "HYGIENE", "returnQty": 1 }
+      ]
+    }
+  },
+  "expect": {
+    "status": "OK",
+    "exact": true,
+    "issues": []
+  }
+}

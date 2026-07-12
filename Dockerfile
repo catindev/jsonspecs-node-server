@@ -20,6 +20,7 @@ RUN npm run deps:registry \
 
 COPY --chown=node:node server.js snapshot.json build-info.json ./
 COPY --chown=node:node lib ./lib
+COPY --chown=node:node samples ./samples
 
 USER node
 

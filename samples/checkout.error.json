@@ -1,0 +1,55 @@
+{
+  "context": {
+    "pipelineId": "entrypoints.checkout.validation",
+    "currentDate": "2026-07-12",
+    "minOrderAmount": 500,
+    "cashOnDeliveryLimit": 15000
+  },
+  "payload": {
+    "customer": {
+      "name": "",
+      "phone": "89161234567",
+      "email": "bad-email"
+    },
+    "delivery": {
+      "type": "COURIER",
+      "regionCode": "39",
+      "address": "",
+      "pickupPointId": null
+    },
+    "payment": {
+      "method": "CASH"
+    },
+    "promo": {
+      "code": "sale-25",
+      "expiresAt": "2026-07-01",
+      "minAmount": 20000
+    },
+    "order": {
+      "amount": 16000,
+      "currency": "USD",
+      "items": [
+        { "sku": "bad", "qty": 0, "price": 1000 },
+        { "sku": "BKS-0987", "qty": -1, "price": 15000 }
+      ]
+    }
+  },
+  "expect": {
+    "status": "ERROR",
+    "issues": [
+      { "code": "1001", "field": "customer.name", "level": "ERROR" },
+      { "code": "1003", "field": "customer.phone", "level": "ERROR" },
+      { "code": "1004", "field": "customer.email", "level": "ERROR" },
+      { "code": "2003", "field": "order.currency", "level": "ERROR" },
+      { "code": "2004", "field": "order.items[0].qty", "level": "ERROR" },
+      { "code": "2004", "field": "order.items[1].qty", "level": "ERROR" },
+      { "code": "2005", "field": "order.items[0].sku", "level": "ERROR" },
+      { "code": "4002", "field": "delivery.address", "level": "ERROR" },
+      { "code": "4003", "field": "delivery.regionCode", "level": "ERROR" },
+      { "code": "3002", "field": "order.amount", "level": "ERROR" },
+      { "code": "5001", "field": "promo.code", "level": "ERROR" },
+      { "code": "5002", "field": "promo.expiresAt", "level": "ERROR" },
+      { "code": "5003", "field": "order.amount", "level": "WARNING" }
+    ]
+  }
+}

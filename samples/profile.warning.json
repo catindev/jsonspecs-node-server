@@ -1,0 +1,23 @@
+{
+  "context": {
+    "pipelineId": "entrypoints.customer.profile",
+    "currentDate": "2026-07-12"
+  },
+  "payload": {
+    "customer": {
+      "name": "Анна Смирнова",
+      "phone": "+79161234567",
+      "email": null,
+      "birthDate": "1992-03-10",
+      "preferredChannel": "CALL",
+      "consentGiven": true,
+      "newsletterOptIn": true
+    }
+  },
+  "expect": {
+    "status": "OK_WITH_WARNINGS",
+    "issues": [
+      { "code": "6006", "field": "customer.email", "level": "WARNING" }
+    ]
+  }
+}

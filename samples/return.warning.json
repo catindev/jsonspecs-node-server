@@ -1,0 +1,32 @@
+{
+  "context": {
+    "pipelineId": "entrypoints.return.request",
+    "currentDate": "2026-07-12"
+  },
+  "payload": {
+    "customer": {
+      "name": "Анна Смирнова",
+      "phone": null,
+      "email": "anna@example.com"
+    },
+    "order": {
+      "id": "A-2026-114302",
+      "status": "PICKED_UP",
+      "amount": 4250,
+      "returnDeadline": "2026-07-25"
+    },
+    "return": {
+      "reason": "CHANGED_MIND",
+      "amount": 1200,
+      "items": [
+        { "sku": "BKS-0412", "category": "BOOKS", "returnQty": 1 }
+      ]
+    }
+  },
+  "expect": {
+    "status": "OK_WITH_WARNINGS",
+    "issues": [
+      { "code": "7009", "field": "return.reason", "level": "WARNING" }
+    ]
+  }
+}

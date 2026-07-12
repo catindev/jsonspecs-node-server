@@ -1,276 +1,223 @@
-# JSONSpecs Node Server
+# Polka jsonspecs Demo Server
 
-Минимальный snapshot-only HTTP validation service на Node.js для запуска готового `jsonspecs` snapshot.
+Snapshot-only HTTP demo service for the `polka-checkout` jsonspecs rules package.
 
-Сервис:
+The server boots a prebuilt `jsonspecs` snapshot, exposes validation over HTTP, and serves Swagger UI for interactive testing.
 
-- загружает `snapshot.json` при старте;
-- проверяет snapshot через `jsonspecs.compileSnapshot()`;
-- поднимает `POST /v1/validate`;
-- принимает `context` и `payload`;
-- возвращает transport-safe runtime result движка;
-- по явному запросу возвращает безопасный `basic` trace.
+## What is included
 
-Без UI, без hot reload, без чтения исходных правил, без генерации документации.
+- `snapshot.json` — built from `polka-checkout` rules.
+- `build-info.json` — deterministic build metadata.
+- `samples/*.json` — executable request examples used by tests and Swagger examples.
+- `lib/operators/polka-operators.js` — Polka custom operator pack.
+- `POST /v1/validate` — validation endpoint.
+- `GET /docs` — Swagger UI.
+- `GET /openapi.json` — OpenAPI 3.0 spec.
+- `GET /v1/meta` — ruleset metadata, entrypoints, samples.
+- `GET /v1/samples` and `GET /v1/samples/:name` — bundled examples.
 
-## Требования
+The service does not compile source rules at runtime. It loads only the snapshot and operator pack.
 
-- Node.js 20+
-- npm
+## Ruleset
 
-## Установка
+Current embedded ruleset:
 
-Для локальной разработки рядом должен быть checkout `../jsonspecs`, потому что исходный `package.json` использует sibling dependency:
+```text
+projectId:        polka-checkout
+projectTitle:     Полка — проверки
+rulesetVersion:   1.1.0
+jsonspecsVersion: 2.1.1
+artifactCount:    91
+```
+
+Entrypoints:
+
+```text
+entrypoints.checkout.validation
+entrypoints.checkout.b2b
+entrypoints.customer.profile
+entrypoints.return.request
+```
+
+## Local run
 
 ```bash
-git clone https://github.com/catindev/jsonspecs.git
-git clone https://github.com/catindev/jsonspecs-node-server.git
-cd jsonspecs-node-server
 npm install
-```
-
-Для standalone/deploy checkout можно материализовать pinned engine из npm:
-
-```bash
-npm run deps:registry
-npm ci
-```
-
-Версия движка зафиксирована в `package.json`:
-
-```json
-{
-  "config": {
-    "jsonspecsVersion": "2.1.1",
-    "jsonspecsGitRef": "v2.1.1"
-  }
-}
-```
-
-## Snapshot
-
-Сервис работает только с готовым snapshot, собранным заранее через `jsonspecs-cli build`.
-
-Здесь не происходит:
-
-- компиляции rules project из `rules/`;
-- чтения `manifest.json`;
-- загрузки исходных правил из репозитория правил;
-- rebuild при изменениях файлов.
-
-По умолчанию используется встроенный `./snapshot.json`. Другой snapshot можно подключить через `SNAPSHOT_PATH`:
-
-```bash
-SNAPSHOT_PATH=/absolute/path/to/snapshot.json npm start
-```
-
-Snapshot должен иметь нормативную форму:
-
-```json
-{
-  "format": "jsonspecs-snapshot",
-  "formatVersion": 1,
-  "sourceHash": "...",
-  "engine": { "minVersion": "2.1.1" },
-  "artifacts": [],
-  "meta": {
-    "projectId": "nominal-beneficiaries-rules",
-    "projectTitle": "Бенефициары ном. счетов (FL_RESIDENT)",
-    "rulesetVersion": "1.0.0"
-  }
-}
-```
-
-При старте сервер проверяет формат, hash и engine compatibility через `compileSnapshot()`. Если snapshot невалиден, процесс не стартует.
-
-## Запуск
-
-```bash
 npm start
 ```
 
-С другим snapshot:
+Open:
 
-```bash
-SNAPSHOT_PATH=/absolute/path/to/snapshot.json npm start
+```text
+http://127.0.0.1:3000/docs
 ```
 
-С другим портом:
+Healthcheck:
 
 ```bash
-PORT=3100 SNAPSHOT_PATH=/absolute/path/to/snapshot.json npm start
+curl http://127.0.0.1:3000/health
 ```
 
-## Docker и Coolify
-
-Репозиторий содержит production Dockerfile. Во время сборки он материализует точную версию `jsonspecs` из npm и сохраняет sibling-layout внутри образа.
-
-Локальная сборка и запуск:
+## Validate request
 
 ```bash
-docker build -t jsonspecs-node-server .
-docker run --rm -p 3000:3000 jsonspecs-node-server
+curl -s -X POST http://127.0.0.1:3000/v1/validate \
+  -H 'Content-Type: application/json' \
+  --data-binary @samples/checkout.ok.json | jq
 ```
 
-Для Coolify:
+The bundled sample files include `expect`; `/v1/validate` ignores that field and uses only `context`, `payload`, and optional `trace`.
 
-- source: Public Repository;
-- branch: `main`;
-- build pack: Dockerfile;
-- port: `3000`;
-- healthcheck path: `/health`.
-
-Встроенный `snapshot.json` используется по умолчанию. Если нужен внешний snapshot, передай `SNAPSHOT_PATH`.
-
-## Endpoint
-
-### POST `/v1/validate`
-
-Request:
+Minimal request shape:
 
 ```json
 {
   "context": {
-    "pipelineId": "entrypoints.fl_resident.full_validation",
-    "currentDate": "2026-03-29"
+    "pipelineId": "entrypoints.checkout.validation",
+    "currentDate": "2026-07-12",
+    "minOrderAmount": 500,
+    "cashOnDeliveryLimit": 15000
   },
   "payload": {
-    "beneficiary": {
-      "inn": "1234567890470"
+    "customer": {
+      "name": "Иван Петров",
+      "phone": "+79161234567",
+      "email": "ivan@example.com"
+    },
+    "delivery": {
+      "type": "COURIER",
+      "regionCode": "77",
+      "address": "Москва, ул. Полковая, д. 3, кв. 12"
+    },
+    "payment": { "method": "CARD" },
+    "order": {
+      "amount": 4250,
+      "currency": "RUB",
+      "items": [
+        { "sku": "BKS-0412", "qty": 2, "price": 1200 }
+      ]
     }
   }
 }
 ```
 
-`context.pipelineId` обязателен. `payload` опционален, но если передан, должен быть JSON object. Request body ограничен Express-лимитом `2mb`.
+`context.pipelineId` is required. `payload`, if provided, must be a JSON object.
 
-Для безопасного диагностического trace добавь верхнеуровневое поле:
+## Trace policy
 
-```json
-{
-  "trace": "basic",
-  "context": {
-    "pipelineId": "entrypoints.fl_resident.full_validation"
-  },
-  "payload": {}
-}
-```
+HTTP API allows only:
 
-Допустимы только `false` и `"basic"`. Режим `"verbose"` через HTTP API намеренно недоступен, потому что может раскрыть значения payload. По умолчанию поля `trace` в ответе нет.
+- omitted / `false` — no trace;
+- `"basic"` — structural trace without raw payload values.
 
-Response:
+`"verbose"` is rejected because it may expose payload data.
+
+Trace is capped by `TRACE_MAX_ENTRIES` to prevent oversized public responses. If the trace is truncated, the response includes:
 
 ```json
 {
-  "context": {
-    "pipelineId": "entrypoints.fl_resident.full_validation",
-    "currentDate": "2026-03-29"
-  },
-  "status": "ERROR",
-  "control": "STOP",
-  "issues": [
-    {
-      "kind": "ISSUE",
-      "level": "ERROR",
-      "code": "FL.INN.LENGTH_12",
-      "message": "ИНН ФЛ должен содержать ровно 12 цифр",
-      "field": "beneficiary.inn",
-      "ruleId": "library.fl.inn_length_12",
-      "expected": "^\\d{12}$",
-      "actual": "1234567890470"
-    }
-  ],
-  "ruleset": {
-    "sourceHash": "d9444d0733786696aaa2e98f6bfae4fedd5804a0b65c36b13645cab1df46c9a5",
-    "rulesetVersion": "1.0.0",
-    "projectId": "nominal-beneficiaries-rules"
-  }
+  "traceTruncated": true,
+  "traceLimit": 500,
+  "traceOriginalLength": 731
 }
 ```
 
-HTTP status отражает обработку запроса, а не бизнес-успешность проверки:
+## HTTP semantics
 
-- `200` — движок вернул обычный runtime result: `OK`, `OK_WITH_WARNINGS`, `ERROR` или `EXCEPTION`;
-- `400` — невалидный JSON или нарушение HTTP request contract;
-- `500` — движок вернул `ABORT` либо сервер не смог выполнить запрос.
+- `200` — validation request was processed. Business status is in JSON body: `OK`, `OK_WITH_WARNINGS`, `ERROR`, or `EXCEPTION`.
+- `400` — invalid JSON or invalid HTTP request contract.
+- `500` — engine `ABORT` or server execution failure.
 
-При `ABORT` тело сохраняет структурированный result с `status: "ABORT"`, `control: "STOP"` и стабильным `error.code`.
+`ABORT` is returned as structured jsonspecs runtime result with `status: "ABORT"` and `control: "STOP"`.
 
-## Healthcheck
-
-### GET `/health`
+## Metadata endpoints
 
 ```bash
-curl http://localhost:3000/health
+curl -s http://127.0.0.1:3000/v1/meta | jq
+curl -s http://127.0.0.1:3000/v1/samples | jq
+curl -s http://127.0.0.1:3000/v1/samples/checkout.ok | jq
 ```
 
-Ответ:
-
-```json
-{
-  "ok": true
-}
-```
-
-## Быстрая проверка через `payload.json`
-
-Если в `payload.json` лежит полный request:
-
-```json
-{
-  "context": {
-    "pipelineId": "entrypoints.fl_resident.full_validation",
-    "currentDate": "2026-03-29"
-  },
-  "payload": {}
-}
-```
-
-Запуск:
+## Docker
 
 ```bash
-curl -s -X POST http://localhost:3000/v1/validate \
-  -H 'Content-Type: application/json' \
-  --data-binary @payload.json | jq
+docker build -t polka-jsonspecs-demo .
+docker run --rm -p 3000:3000 polka-jsonspecs-demo
 ```
 
-## Переменные окружения
+The Dockerfile materializes the pinned `jsonspecs` engine from npm during build.
 
-| Variable | Default | Description |
-| --- | --- | --- |
-| `SNAPSHOT_PATH` | `./snapshot.json` | Путь к snapshot-файлу. |
-| `PORT` | `3000` | HTTP port. |
+## Coolify
 
-## Тесты
+Recommended Coolify settings:
+
+- source: GitHub repository;
+- branch: `main`;
+- build pack: Dockerfile;
+- exposed port: `3000`;
+- healthcheck path: `/health`;
+- domain: `polka-demo.vladimirandreevich.ru`;
+- environment:
+
+```text
+PORT=3000
+SNAPSHOT_PATH=/workspace/jsonspecs-node-server/snapshot.json
+BUILD_INFO_PATH=/workspace/jsonspecs-node-server/build-info.json
+SAMPLES_PATH=/workspace/jsonspecs-node-server/samples
+TRACE_MAX_ENTRIES=500
+```
+
+After deploy:
+
+```bash
+curl https://polka-demo.vladimirandreevich.ru/health
+open https://polka-demo.vladimirandreevich.ru/docs
+```
+
+## Updating embedded Polka rules
+
+From `polka-checkout`:
+
+```bash
+cd /Users/vladimirtitskiy/Dev/jsonspecs-test/polka-checkout
+npx jsonspecs-cli@2.1.2 build
+```
+
+Then copy:
+
+```bash
+cp dist/snapshot.json /Users/vladimirtitskiy/Dev/jsonspecs-node-server/snapshot.json
+cp dist/build-info.json /Users/vladimirtitskiy/Dev/jsonspecs-node-server/build-info.json
+cp operators/node/index.js /Users/vladimirtitskiy/Dev/jsonspecs-node-server/lib/operators/polka-operators.js
+rsync -a --delete samples/ /Users/vladimirtitskiy/Dev/jsonspecs-node-server/samples/
+```
+
+Run:
+
+```bash
+cd /Users/vladimirtitskiy/Dev/jsonspecs-node-server
+npm test
+```
+
+## Tests
 
 ```bash
 npm test
 ```
 
-Тесты проверяют:
+Tests cover:
 
-- согласованность `snapshot.json` и `build-info.json`;
-- boot нормативного snapshot;
+- snapshot/build-info consistency;
+- boot through `jsonspecs.compileSnapshot()`;
+- all bundled Polka samples;
 - `/health`;
-- `/v1/validate`;
-- отсутствие trace по умолчанию;
-- ruleset provenance в ответе;
-- `ABORT` как HTTP 500;
-- запрет `verbose` trace;
-- отсутствие raw payload values в `basic` trace;
-- custom identifier operators через `ctx.get()`.
-
-Текущее покрытие и рекомендуемые доработки тестов зафиксированы в [TESTING.md](./TESTING.md).
-
-## Ограничения текущей версии
-
-Сервис намеренно минимальный:
-
-- один snapshot на процесс;
-- один validation endpoint;
-- без auth;
-- без persistence;
-- без live rebuild;
-- без UI.
-
-Если endpoint открывается наружу, добавь внешний auth/rate limit и подумай о лимите размера trace response.
+- `/docs`;
+- `/openapi.json`;
+- `/v1/meta`;
+- `/v1/samples`;
+- default no-trace behavior;
+- `basic` trace redaction;
+- `verbose` trace rejection;
+- engine `ABORT` as HTTP 500;
+- malformed request rejection;
+- custom operator `inn10_valid`.

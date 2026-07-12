@@ -1,16 +1,18 @@
 {
-  "projectId": "nominal-beneficiaries-rules",
-  "projectTitle": "Бенефициары ном. счетов (FL_RESIDENT)",
-  "rulesetVersion": "1.0.0",
-  "builtAt": "2026-03-30T06:27:45.215Z",
-  "snapshotMigratedAt": "2026-07-12T08:16:05Z",
-  "jsonspecsVersion": "2.1.0",
+  "projectId": "polka-checkout",
+  "projectTitle": "Полка — проверки",
+  "rulesetVersion": "1.1.0",
+  "builtAt": "2026-07-12T21:15:42.901Z",
+  "jsonspecsVersion": "2.1.1",
   "snapshotFormat": "jsonspecs-snapshot",
   "snapshotFormatVersion": 1,
-  "sourceHash": "d9444d0733786696aaa2e98f6bfae4fedd5804a0b65c36b13645cab1df46c9a5",
-  "artifactCount": 188,
+  "sourceHash": "ceefdc3af41ae7f156cef6735291111a5e50302c5eed07cf38830976bb8bd420",
+  "artifactCount": 91,
   "entrypoints": [
-    "entrypoints.fl_resident.full_validation"
+    "entrypoints.checkout.b2b",
+    "entrypoints.checkout.validation",
+    "entrypoints.customer.profile",
+    "entrypoints.return.request"
   ],
   "nodeOperatorPacks": [
     "./operators/node"

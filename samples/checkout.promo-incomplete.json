@@ -1,0 +1,27 @@
+{
+  "context": {
+    "pipelineId": "entrypoints.checkout.validation",
+    "currentDate": "2026-07-12",
+    "minOrderAmount": 500,
+    "cashOnDeliveryLimit": 15000
+  },
+  "payload": {
+    "customer": { "name": "Пётр Иванов", "phone": "+79161234567", "email": null },
+    "delivery": { "type": "PICKUP", "regionCode": null, "address": null, "pickupPointId": "PVZ-77-001" },
+    "payment": { "method": "CARD" },
+    "promo": { "code": "SPRING25", "expiresAt": null, "minAmount": null },
+    "order": {
+      "amount": 4250,
+      "currency": "RUB",
+      "items": [{ "sku": "BKS-0412", "qty": 2, "price": 2125 }]
+    }
+  },
+  "expect": {
+    "status": "ERROR",
+    "exact": true,
+    "issues": [
+      { "code": "5004", "field": "promo.expiresAt", "level": "ERROR" },
+      { "code": "5005", "field": "promo.minAmount", "level": "ERROR" }
+    ]
+  }
+}

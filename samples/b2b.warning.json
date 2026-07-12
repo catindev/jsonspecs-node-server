@@ -1,0 +1,40 @@
+{
+  "context": {
+    "pipelineId": "entrypoints.checkout.b2b",
+    "minOrderAmount": 500,
+    "maxDeferredDays": 30,
+    "largeOrderThreshold": 300000
+  },
+  "payload": {
+    "organization": {
+      "name": "ООО Полка-Партнёр",
+      "inn": "7707083893",
+      "kpp": "770101001",
+      "legalAddress": "Москва, ул. Школьная, д. 1",
+      "contractNumber": null
+    },
+    "payment": {
+      "method": "INVOICE",
+      "deferredDays": 0
+    },
+    "order": {
+      "amount": 350000,
+      "currency": "RUB",
+      "items": [
+        { "sku": "STA-1120", "qty": 820, "price": 428 }
+      ]
+    },
+    "delivery": {
+      "type": "PICKUP",
+      "regionCode": null,
+      "address": null,
+      "pickupPointId": "PVZ-77-001"
+    }
+  },
+  "expect": {
+    "status": "OK_WITH_WARNINGS",
+    "issues": [
+      { "code": "8008", "field": "order.amount", "level": "WARNING" }
+    ]
+  }
+}

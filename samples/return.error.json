@@ -1,0 +1,39 @@
+{
+  "context": {
+    "pipelineId": "entrypoints.return.request",
+    "currentDate": "2026-07-12"
+  },
+  "payload": {
+    "customer": {
+      "name": "Иван Петров",
+      "phone": "+79161234567",
+      "email": "ivan@example.com"
+    },
+    "order": {
+      "id": "",
+      "status": "CREATED",
+      "amount": 4250,
+      "returnDeadline": "2026-07-01"
+    },
+    "return": {
+      "reason": "CHANGED_MIND",
+      "amount": 5000,
+      "items": [
+        { "sku": "bad", "category": "HYGIENE", "returnQty": 0 }
+      ]
+    }
+  },
+  "expect": {
+    "status": "ERROR",
+    "issues": [
+      { "code": "7001", "field": "order.id", "level": "ERROR" },
+      { "code": "7002", "field": "order.status", "level": "ERROR" },
+      { "code": "7003", "field": "order.returnDeadline", "level": "ERROR" },
+      { "code": "7005", "field": "return.items[0].returnQty", "level": "ERROR" },
+      { "code": "7006", "field": "return.items[0].sku", "level": "ERROR" },
+      { "code": "7007", "field": "return.amount", "level": "ERROR" },
+      { "code": "7008", "field": "return.items[0].category", "level": "ERROR" },
+      { "code": "7009", "field": "return.reason", "level": "WARNING" }
+    ]
+  }
+}

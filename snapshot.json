@@ -1,2533 +1,1247 @@
 {
   "format": "jsonspecs-snapshot",
   "formatVersion": 1,
-  "sourceHash": "d9444d0733786696aaa2e98f6bfae4fedd5804a0b65c36b13645cab1df46c9a5",
+  "sourceHash": "ceefdc3af41ae7f156cef6735291111a5e50302c5eed07cf38830976bb8bd420",
   "engine": {
-    "minVersion": "2.1.0"
+    "minVersion": "2.1.1"
   },
   "artifacts": [
     {
-      "id": "beneficiary_types",
-      "type": "dictionary",
-      "description": "Допустимые типы бенефициаров для версии 1",
-      "entries": [
-        "UL_RESIDENT",
-        "UL_NONRESIDENT",
-        "IP_RESIDENT",
-        "IP_NONRESIDENT",
-        "FL_RESIDENT",
-        "FL_NONRESIDENT"
-      ]
-    },
-    {
-      "id": "document_type_codes_fl",
-      "type": "dictionary",
-      "description": "Допустимые коды документов для ФЛ по классификатору: 21–35, 36, 37 и 99",
-      "entries": [
-        "21",
-        "22",
-        "23",
-        "24",
-        "25",
-        "26",
-        "27",
-        "28",
-        "29",
-        "30",
-        "31",
-        "32",
-        "33",
-        "34",
-        "35",
-        "36",
-        "37",
-        "99"
-      ]
-    },
-    {
-      "id": "domestic_document_type_codes_fl",
-      "type": "dictionary",
-      "description": "Коды документов для ФЛ, относящиеся к отечественной группе: 21–30",
-      "entries": [
-        "21",
-        "22",
-        "23",
-        "24",
-        "25",
-        "26",
-        "27",
-        "28",
-        "29",
-        "30"
-      ]
-    },
-    {
-      "id": "foreign_document_type_codes_fl",
-      "type": "dictionary",
-      "description": "Коды документов иностранных граждан / лиц без гражданства для ФЛ: 31–37 и 99",
-      "entries": [
-        "31",
-        "32",
-        "33",
-        "34",
-        "35",
-        "36",
-        "37",
-        "99"
-      ]
-    },
-    {
-      "id": "tin_absence_reasons",
-      "type": "dictionary",
-      "description": "Причины отсутствия иностранного ИНН",
-      "entries": [
-        "A",
-        "B",
-        "C"
-      ]
-    },
-    {
-      "id": "true_false",
-      "type": "dictionary",
-      "description": "Логические значения boolean",
-      "entries": [
+      "id": "entrypoints.checkout.b2b.cond_deferred_payment_checks",
+      "type": "condition",
+      "description": "Если запрошена отсрочка, проверить договор и предельный срок",
+      "when": "entrypoints.checkout.b2b.payment.pred_deferred_days_positive",
+      "steps": [
         {
-          "value": true
+          "rule": "entrypoints.checkout.b2b.organization.contract_number_required"
         },
         {
-          "value": false
+          "rule": "entrypoints.checkout.b2b.payment.deferred_days_max"
         }
       ]
     },
     {
-      "id": "library.address.address_line",
-      "type": "rule",
-      "description": "Проверка адреса регистрации (одной строкой) на длину",
-      "role": "check",
-      "operator": "length_max",
-      "level": "ERROR",
-      "code": "BEN.ADDR.REG.ADDRESS_LINE.LENGTH",
-      "message": "Адрес регистрации (указан одной строкой) превышает 500 символов",
-      "field": "beneficiary.address.registration.addressLine",
-      "value": 500
-    },
-    {
-      "id": "library.address.apartment",
-      "type": "rule",
-      "description": "Проверка квартиры или офиса адреса регистрации на длину",
-      "role": "check",
-      "operator": "length_max",
-      "level": "ERROR",
-      "code": "BEN.ADDR.REG.APARTMENT.LENGTH",
-      "message": "Указанная квартира/офис адреса регистрации превышает длину в 32 символа",
-      "field": "beneficiary.address.registration.apartment",
-      "value": 32
-    },
-    {
-      "id": "library.address.building",
-      "type": "rule",
-      "description": "Проверка корпуса/строения адреса регистрации на длину",
-      "role": "check",
-      "operator": "length_max",
-      "level": "ERROR",
-      "code": "BEN.ADDR.REG.BUILDING.LENGTH",
-      "message": "Корпус/строение адреса регистрации превышает 32 символа",
-      "field": "beneficiary.address.registration.building",
-      "value": 32
-    },
-    {
-      "id": "library.address.city",
-      "type": "rule",
-      "description": "Проверка города адреса регистрации на длину",
-      "role": "check",
-      "operator": "length_max",
-      "level": "ERROR",
-      "code": "BEN.ADDR.REG.CITY.LENGTH",
-      "message": "Город адреса регистрации слишком длинный",
-      "field": "beneficiary.address.registration.city",
-      "value": 255
-    },
-    {
-      "id": "library.address.cond_address_line_if_present",
+      "id": "entrypoints.checkout.b2b.cond_large_order_if_amount_present",
       "type": "condition",
-      "description": "Если адрес регистрации (одной строкой) заполнен, проверяем формат и длину",
-      "when": {
-        "all": [
-          "library.address.pred_address_line_present"
-        ]
-      },
+      "description": "Если сумма заказа заполнена, проверить порог крупной сделки",
+      "when": "library.checkout.order.pred_amount_filled",
       "steps": [
         {
-          "rule": "library.address.address_line"
+          "rule": "entrypoints.checkout.b2b.order.large_order_warning"
         }
       ]
     },
     {
-      "id": "library.address.cond_apartment_if_present",
-      "type": "condition",
-      "description": "Если заполнена квартира/офис адреса регистрации, проверяем формат и длину",
-      "when": {
-        "all": [
-          "library.address.pred_apartment_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.address.apartment"
-        }
-      ]
-    },
-    {
-      "id": "library.address.cond_building_if_present",
-      "type": "condition",
-      "description": "Если заполнен корпус/строение адреса регистрации, проверяем формат и длину",
-      "when": {
-        "all": [
-          "library.address.pred_building_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.address.building"
-        }
-      ]
-    },
-    {
-      "id": "library.address.cond_city_if_present",
-      "type": "condition",
-      "description": "Если города адреса регистрации заполнен, проверяем формат и длину",
-      "when": {
-        "all": [
-          "library.address.pred_city_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.address.city"
-        }
-      ]
-    },
-    {
-      "id": "library.address.cond_house_if_present",
-      "type": "condition",
-      "description": "Если дом адреса регистрации заполнен, проверяем формат и длину",
-      "when": {
-        "all": [
-          "library.address.pred_house_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.address.house"
-        }
-      ]
-    },
-    {
-      "id": "library.address.cond_locality_if_present",
-      "type": "condition",
-      "description": "Если заполнен населённый пункт адреса регистрации, проверяем формат и длину",
-      "when": {
-        "all": [
-          "library.address.pred_locality_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.address.locality"
-        }
-      ]
-    },
-    {
-      "id": "library.address.cond_postal_address_country_if_present",
-      "type": "condition",
-      "description": "Если код страны почтового адреса заполнен, проверяем формат",
-      "when": {
-        "all": [
-          "library.address.pred_postal_address_country_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.address.postal_address_country_format"
-        }
-      ]
-    },
-    {
-      "id": "library.address.cond_postal_address_if_present",
-      "type": "condition",
-      "description": "Если почтовый адрес указан, проверяем запрет США и код страны почтового адреса",
-      "when": {
-        "all": [
-          "library.address.pred_postal_address_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.address.postal_address_country_required"
-        },
-        {
-          "condition": "library.address.cond_postal_address_country_if_present"
-        },
-        {
-          "rule": "library.address.postal_address_not_us"
-        }
-      ]
-    },
-    {
-      "id": "library.address.cond_postal_if_present",
-      "type": "condition",
-      "description": "Если почтовый индекс адреса регистрации заполнен, проверяем формат и длину",
-      "when": {
-        "all": [
-          "library.address.pred_postal_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.address.postal"
-        }
-      ]
-    },
-    {
-      "id": "library.address.cond_region_code_if_present",
-      "type": "condition",
-      "description": "Если код региона адреса регистрации заполнен, проверяем формат и длину",
-      "when": {
-        "all": [
-          "library.address.pred_region_code_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.address.region_code"
-        }
-      ]
-    },
-    {
-      "id": "library.address.cond_region_name_if_present",
-      "type": "condition",
-      "description": "Если заполнен регион адреса регистрации, проверяем формат и длину",
-      "when": {
-        "all": [
-          "library.address.pred_region_name_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.address.region_name"
-        }
-      ]
-    },
-    {
-      "id": "library.address.cond_street_if_present",
-      "type": "condition",
-      "description": "Если заполнена улица адреса регистрации, проверяем формат и длину",
-      "when": {
-        "all": [
-          "library.address.pred_street_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.address.street"
-        }
-      ]
-    },
-    {
-      "id": "library.address.country",
+      "id": "entrypoints.checkout.b2b.order.large_order_warning",
       "type": "rule",
-      "description": "Проверка страны адреса регистрации",
-      "role": "check",
-      "operator": "matches_regex",
-      "level": "ERROR",
-      "code": "BEN.ADDR.REG.COUNTRY.FORMAT",
-      "message": "Страна адреса регистрации должна быть в формате ISO 3166-1 alpha-2",
-      "field": "beneficiary.address.registration.countryCode",
-      "value": "^[A-Z]{2}$"
-    },
-    {
-      "id": "library.address.house",
-      "type": "rule",
-      "description": "Проверка дома адреса регистрации на длину",
-      "role": "check",
-      "operator": "length_max",
-      "level": "ERROR",
-      "code": "BEN.ADDR.REG.HOUSE.LENGTH",
-      "message": "Дом адреса регистрации > 32 символов",
-      "field": "beneficiary.address.registration.house",
-      "value": 32
-    },
-    {
-      "id": "library.address.locality",
-      "type": "rule",
-      "description": "Проверка населённого пункта адреса регистрации на длину",
-      "role": "check",
-      "operator": "length_max",
-      "level": "ERROR",
-      "code": "BEN.ADDR.REG.LOCALITY.LENGTH",
-      "message": "Населённый пункт адреса регистрации > 255 символов",
-      "field": "beneficiary.address.registration.locality",
-      "value": 255
-    },
-    {
-      "id": "library.address.postal",
-      "type": "rule",
-      "description": "Проверка почтового индекса адреса регистрации",
-      "role": "check",
-      "operator": "length_max",
-      "level": "ERROR",
-      "code": "BEN.ADDR.REG.POSTAL.LENGTH",
-      "message": "Почтовый индекс адреса регистрации слишком длинный",
-      "field": "beneficiary.address.registration.postalCode",
-      "value": 32
-    },
-    {
-      "id": "library.address.postal_address_country_format",
-      "type": "rule",
-      "description": "Код страны почтового адреса должен быть в формате ISO 3166-1 alpha-2",
-      "role": "check",
-      "operator": "matches_regex",
-      "level": "ERROR",
-      "code": "BEN.CONTACTS.POSTAL_COUNTRY.FORMAT",
-      "message": "Код страны почтового адреса должен быть в формате ISO 3166-1 alpha-2",
-      "field": "beneficiary.contacts.postalAddressCountryCode",
-      "value": "^[A-Z]{2}$"
-    },
-    {
-      "id": "library.address.postal_address_country_required",
-      "type": "rule",
-      "description": "Код страны почтового адреса обязателен, если почтовый адрес заполнен",
-      "role": "check",
-      "operator": "not_empty",
-      "level": "ERROR",
-      "code": "BEN.CONTACTS.POSTAL_COUNTRY.REQUIRED",
-      "message": "Не указан код страны почтового адреса",
-      "field": "beneficiary.contacts.postalAddressCountryCode"
-    },
-    {
-      "id": "library.address.postal_address_not_us",
-      "type": "rule",
-      "description": "Почтовый адрес не должен содержать указание на США",
-      "role": "check",
-      "operator": "matches_regex",
-      "level": "EXCEPTION",
-      "code": "BEN.CONTACTS.POSTAL.NOT_US",
-      "message": "Почтовый адрес не должен указывать на США",
-      "field": "beneficiary.contacts.postalAddress",
-      "value": "^(?!.*(?:США|USA|Usa|usa|US|U\\.S\\.)).*$"
-    },
-    {
-      "id": "library.address.pred_address_line_present",
-      "type": "rule",
-      "description": "Заполнен адрес регистрации (одной строкой)",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.address.registration.addressLine"
-    },
-    {
-      "id": "library.address.pred_apartment_present",
-      "type": "rule",
-      "description": "Заполнена квартира или офис адреса регистрации",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.address.registration.apartment"
-    },
-    {
-      "id": "library.address.pred_building_present",
-      "type": "rule",
-      "description": "Заполнен корпус/строение адреса регистрации",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.address.registration.building"
-    },
-    {
-      "id": "library.address.pred_city_present",
-      "type": "rule",
-      "description": "Заполнен город адреса регистрации",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.address.registration.city"
-    },
-    {
-      "id": "library.address.pred_country_present",
-      "type": "rule",
-      "description": "Заполнена страна адреса регистрации",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.address.registration.countryCode"
-    },
-    {
-      "id": "library.address.pred_house_present",
-      "type": "rule",
-      "description": "Дом адреса регистрации заполнен",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.address.registration.house"
-    },
-    {
-      "id": "library.address.pred_locality_present",
-      "type": "rule",
-      "description": "Заполнен населённый пункт адреса регистрации",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.address.registration.locality"
-    },
-    {
-      "id": "library.address.pred_postal_address_country_present",
-      "type": "rule",
-      "description": "Код страны почтового адреса заполнен",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.contacts.postalAddressCountryCode"
-    },
-    {
-      "id": "library.address.pred_postal_address_present",
-      "type": "rule",
-      "description": "Почтовый адрес заполнен",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.contacts.postalAddress"
-    },
-    {
-      "id": "library.address.pred_postal_present",
-      "type": "rule",
-      "description": "Заполнен почтовый индекс адреса регистрации",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.address.registration.postalCode"
-    },
-    {
-      "id": "library.address.pred_region_code_present",
-      "type": "rule",
-      "description": "Код региона адреса регистрации заполнен",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.address.registration.regionCode"
-    },
-    {
-      "id": "library.address.pred_region_name_present",
-      "type": "rule",
-      "description": "Заполнен регион адреса регистрации",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.address.registration.regionName"
-    },
-    {
-      "id": "library.address.pred_street_present",
-      "type": "rule",
-      "description": "Заполнена улица адреса регистрации",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.address.registration.street"
-    },
-    {
-      "id": "library.address.region_code",
-      "type": "rule",
-      "description": "Проверка кода региона адреса регистрации на длину",
-      "role": "check",
-      "operator": "length_max",
-      "level": "ERROR",
-      "code": "BEN.ADDR.REG.REGION_CODE.LENGTH",
-      "message": "Код региона адреса регистрации слишком длинный",
-      "field": "beneficiary.address.registration.regionCode",
-      "value": 32
-    },
-    {
-      "id": "library.address.region_name",
-      "type": "rule",
-      "description": "Проверка региона адреса регистрации",
-      "role": "check",
-      "operator": "length_max",
-      "level": "ERROR",
-      "code": "BEN.ADDR.REG.REGION_NAME.LENGTH",
-      "message": "Наименование региона адреса регистрации > 255 символов",
-      "field": "beneficiary.address.registration.regionName",
-      "value": 255
-    },
-    {
-      "id": "library.address.registration_address_required",
-      "type": "rule",
-      "description": "Адрес регистрации обязателен",
-      "role": "check",
-      "operator": "not_empty",
-      "level": "ERROR",
-      "code": "FL.ADDRESS.REGISTRATION.REQUIRED",
-      "message": "Не указан адрес регистрации",
-      "field": "beneficiary.address.registration.addressLine"
-    },
-    {
-      "id": "library.address.street",
-      "type": "rule",
-      "description": "Проверка улицы адреса регистрации",
-      "role": "check",
-      "operator": "length_max",
-      "level": "ERROR",
-      "code": "BEN.ADDR.REG.STREET.LENGTH",
-      "message": "Улица адреса регистрации > 255 символов",
-      "field": "beneficiary.address.registration.street",
-      "value": 255
-    },
-    {
-      "id": "library.common.beneficiary_type_required",
-      "type": "rule",
-      "description": "Тип бенефициара обязателен",
-      "role": "check",
-      "operator": "not_empty",
-      "level": "EXCEPTION",
-      "code": "BEN.TYPE.REQUIRED",
-      "message": "Не указан beneficiary.type",
-      "field": "beneficiary.type"
-    },
-    {
-      "id": "library.common.beneficiary_type_supported",
-      "type": "rule",
-      "description": "Тип бенефициара должен входить в поддерживаемый enum",
-      "role": "check",
-      "operator": "in_dictionary",
-      "level": "EXCEPTION",
-      "code": "BEN.TYPE.UNSUPPORTED",
-      "message": "Неподдерживаемый тип бенефициара",
-      "field": "beneficiary.type",
-      "dictionary": {
-        "type": "static",
-        "id": "beneficiary_types"
-      }
-    },
-    {
-      "id": "library.common.cond_email_if_present",
-      "type": "condition",
-      "description": "Если email указан, проверяем формат и длину",
-      "when": {
-        "all": [
-          "library.common.pred_email_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.common.email_format"
-        },
-        {
-          "rule": "library.common.email_length"
-        }
-      ]
-    },
-    {
-      "id": "library.common.cond_participation_if_present",
-      "type": "condition",
-      "description": "Если идентификатор участия указан, то проверяем длину",
-      "when": {
-        "all": [
-          "library.common.pred_participation_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.common.participation_length"
-        }
-      ]
-    },
-    {
-      "id": "library.common.cond_phone_foreign_if_present",
-      "type": "condition",
-      "description": "Если иностранный телефон указан, проверяем формат",
-      "when": {
-        "all": [
-          "library.common.pred_phone_foreign_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.common.phone_foreign_e164"
-        }
-      ]
-    },
-    {
-      "id": "library.common.cond_phone_if_present",
-      "type": "condition",
-      "description": "Если телефон указан, проверяем формат",
-      "when": {
-        "all": [
-          "library.common.pred_phone_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.common.phone_e164"
-        }
-      ]
-    },
-    {
-      "id": "library.common.cond_status_end_if_present",
-      "type": "condition",
-      "description": "Если дата окончания статуса указана, то проверяем формат, затем порядок",
-      "when": {
-        "all": [
-          "library.common.pred_status_end_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.common.status_end_format"
-        },
-        {
-          "condition": "library.common.cond_status_end_order_if_format_ok"
-        }
-      ]
-    },
-    {
-      "id": "library.common.cond_status_end_order_if_format_ok",
-      "type": "condition",
-      "description": "Если формат endDate корректен, то проверяем порядок дат",
-      "when": {
-        "all": [
-          "library.common.pred_status_end_format_valid"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.common.status_end_gt_start"
-        }
-      ]
-    },
-    {
-      "id": "library.common.cond_status_start_if_present",
-      "type": "condition",
-      "description": "Если дата начала статуса указана, то проверяем формат",
-      "when": {
-        "all": [
-          "library.common.pred_status_start_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.common.status_start_format"
-        }
-      ]
-    },
-    {
-      "id": "library.common.contacts_any",
-      "type": "rule",
-      "description": "Должен быть указан хотя бы один контакт: телефон РФ или email",
-      "role": "check",
-      "operator": "any_filled",
-      "level": "ERROR",
-      "code": "BEN.CONTACTS.MIN_ONE",
-      "message": "Необходимо заполнить хотя бы один контакт: телефон РФ или email",
-      "fields": [
-        "beneficiary.contacts.phone",
-        "beneficiary.contacts.email"
-      ],
-      "paths": [
-        "beneficiary.contacts.phone",
-        "beneficiary.contacts.email"
-      ]
-    },
-    {
-      "id": "library.common.email_format",
-      "type": "rule",
-      "description": "Email должен быть валидным",
-      "role": "check",
-      "operator": "matches_regex",
-      "level": "ERROR",
-      "code": "BEN.CONTACTS.EMAIL.FORMAT",
-      "message": "Некорректный email",
-      "field": "beneficiary.contacts.email",
-      "value": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
-    },
-    {
-      "id": "library.common.email_length",
-      "type": "rule",
-      "description": "Email не должен быть длиннее 320 символов",
-      "role": "check",
-      "operator": "length_max",
-      "level": "ERROR",
-      "code": "BEN.CONTACTS.EMAIL.LENGTH",
-      "message": "Email превышает 320 символов",
-      "field": "beneficiary.contacts.email",
-      "value": 320
-    },
-    {
-      "id": "library.common.participation_length",
-      "type": "rule",
-      "description": "Идентификатор основания участия не должен быть длиннее 64 символов",
-      "role": "check",
-      "operator": "length_max",
-      "level": "ERROR",
-      "code": "BEN.PARTICIPATION.LENGTH",
-      "message": "Идентификатор основания участия превышает 64 символа",
-      "field": "beneficiary.participationId",
-      "value": 64
-    },
-    {
-      "id": "library.common.participation_required",
-      "type": "rule",
-      "description": "Идентификатор основания участия должен быть заполнен",
-      "role": "check",
-      "operator": "not_empty",
-      "level": "ERROR",
-      "code": "BEN.PARTICIPATION.REQUIRED",
-      "message": "Не указан идентификатор основания участия",
-      "field": "beneficiary.participationId"
-    },
-    {
-      "id": "library.common.phone_e164",
-      "type": "rule",
-      "description": "Телефон должен быть в формате E.164",
-      "role": "check",
-      "operator": "matches_regex",
-      "level": "ERROR",
-      "code": "BEN.CONTACTS.PHONE.E164",
-      "message": "Телефон должен быть в формате E.164",
-      "field": "beneficiary.contacts.phone",
-      "value": "^\\+?[1-9]\\d{7,14}$"
-    },
-    {
-      "id": "library.common.phone_foreign_e164",
-      "type": "rule",
-      "description": "Иностранный телефон должен быть в формате E.164",
-      "role": "check",
-      "operator": "matches_regex",
-      "level": "ERROR",
-      "code": "BEN.CONTACTS.PHONE_FOREIGN.E164",
-      "message": "Иностранный телефон должен быть в формате E.164",
-      "field": "beneficiary.contacts.phoneForeign",
-      "value": "^\\+?[1-9]\\d{7,14}$"
-    },
-    {
-      "id": "library.common.pred_email_present",
-      "type": "rule",
-      "description": "Email указан",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.contacts.email"
-    },
-    {
-      "id": "library.common.pred_participation_present",
-      "type": "rule",
-      "description": "Идентификатор участия указан",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.participationId"
-    },
-    {
-      "id": "library.common.pred_phone_foreign_present",
-      "type": "rule",
-      "description": "Иностранный телефон указан",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.contacts.phoneForeign"
-    },
-    {
-      "id": "library.common.pred_phone_present",
-      "type": "rule",
-      "description": "Телефон указан",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.contacts.phone"
-    },
-    {
-      "id": "library.common.pred_status_end_format_valid",
-      "type": "rule",
-      "description": "Дата окончания статуса в формате YYYY-MM-DD",
-      "role": "predicate",
-      "operator": "matches_regex",
-      "field": "beneficiary.status.endDate",
-      "value": "^\\\\d{4}-\\\\d{2}-\\\\d{2}$"
-    },
-    {
-      "id": "library.common.pred_status_end_present",
-      "type": "rule",
-      "description": "Дата окончания статуса указана",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.status.endDate"
-    },
-    {
-      "id": "library.common.pred_status_start_present",
-      "type": "rule",
-      "description": "Дата начала статуса указана",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.status.startDate"
-    },
-    {
-      "id": "library.common.status_end_format",
-      "type": "rule",
-      "description": "Дата окончания статуса должна быть в формате YYYY-MM-DD",
-      "role": "check",
-      "operator": "matches_regex",
-      "level": "ERROR",
-      "code": "BEN.STATUS.END.FORMAT",
-      "message": "beneficiary.status.endDate должна быть в формате YYYY-MM-DD",
-      "field": "beneficiary.status.endDate",
-      "value": "^\\d{4}-\\d{2}-\\d{2}$"
-    },
-    {
-      "id": "library.common.status_end_gt_start",
-      "type": "rule",
-      "description": "Дата окончания статуса должна быть позже даты начала",
-      "role": "check",
-      "operator": "field_greater_than_field",
-      "level": "ERROR",
-      "code": "BEN.STATUS.END.ORDER",
-      "message": "Дата окончания статуса должна быть позже beneficiary.status.startDate",
-      "field": "beneficiary.status.endDate",
-      "value_field": "beneficiary.status.startDate"
-    },
-    {
-      "id": "library.common.status_start_format",
-      "type": "rule",
-      "description": "Дата начала статуса должна быть в формате YYYY-MM-DD",
-      "role": "check",
-      "operator": "matches_regex",
-      "level": "ERROR",
-      "code": "BEN.STATUS.START.FORMAT",
-      "message": "beneficiary.status.startDate должна быть в формате YYYY-MM-DD",
-      "field": "beneficiary.status.startDate",
-      "value": "^\\d{4}-\\d{2}-\\d{2}$"
-    },
-    {
-      "id": "library.common.status_start_required",
-      "type": "rule",
-      "description": "Дата начала статуса обязательна",
-      "role": "check",
-      "operator": "not_empty",
-      "level": "ERROR",
-      "code": "BEN.STATUS.START.REQUIRED",
-      "message": "Не указана beneficiary.status.startDate",
-      "field": "beneficiary.status.startDate"
-    },
-    {
-      "id": "library.documents.cond_domestic_doc_consistency",
-      "type": "condition",
-      "description": "Если код документа относится к отечественной группе, проверяем признак иностранного документа",
-      "when": {
-        "all": [
-          "library.documents.pred_type_code_domestic_group"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.documents.rule_is_foreign_false"
-        }
-      ]
-    },
-    {
-      "id": "library.documents.cond_expire_date_if_present",
-      "type": "condition",
-      "description": "Если дата окончания документа указана, то проверяем формат, затем порядок",
-      "when": {
-        "all": [
-          "library.documents.pred_expire_date_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.documents.expire_date_format"
-        },
-        {
-          "condition": "library.documents.cond_expire_date_order_if_format_ok"
-        }
-      ]
-    },
-    {
-      "id": "library.documents.cond_expire_date_order_if_format_ok",
-      "type": "condition",
-      "description": "Если формат expireDate корректен, то проверяем порядок дат",
-      "when": {
-        "all": [
-          "library.documents.pred_expire_date_format_valid"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.documents.date_order"
-        }
-      ]
-    },
-    {
-      "id": "library.documents.cond_foreign_doc_consistency",
-      "type": "condition",
-      "description": "Если код документа относится к иностранным документам, проверяем признак иностранного документа",
-      "when": {
-        "all": [
-          "library.documents.pred_type_code_foreign_group"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.documents.rule_is_foreign_true"
-        }
-      ]
-    },
-    {
-      "id": "library.documents.cond_issue_date_gt_birth_if_format_ok",
-      "type": "condition",
-      "description": "Если формат issueDate корректен, то проверяем, что дата не больше текущей даты и позже рождения",
-      "when": {
-        "all": [
-          "library.documents.pred_issue_date_format_valid"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.documents.issue_date_not_future"
-        },
-        {
-          "rule": "library.documents.issue_date_gt_birth_date"
-        }
-      ]
-    },
-    {
-      "id": "library.documents.cond_issue_date_if_present",
-      "type": "condition",
-      "description": "Если дата выдачи указана, то проверяем формат, затем сравниваем с текущей датой и датой рождения",
-      "when": {
-        "all": [
-          "library.documents.pred_issue_date_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.documents.issue_date_format"
-        },
-        {
-          "rule": "library.documents.issue_date_not_future"
-        },
-        {
-          "condition": "library.documents.cond_issue_date_gt_birth_if_format_ok"
-        }
-      ]
-    },
-    {
-      "id": "library.documents.cond_issuer_code_format_if_present",
-      "type": "condition",
-      "description": "Если код подразделения указан, то проверяем формат",
-      "when": {
-        "all": [
-          "library.documents.pred_issuer_code_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.documents.issuer_code_format"
-        }
-      ]
-    },
-    {
-      "id": "library.documents.cond_issuer_if_present",
-      "type": "condition",
-      "description": "Если орган выдачи указан, выполняем мягкие проверки качества заполнения",
-      "when": "library.documents.pred_issuer_present",
-      "steps": [
-        {
-          "rule": "library.documents.issuer_no_extra_spaces"
-        },
-        {
-          "rule": "library.documents.issuer_no_garbage_symbols"
-        }
-      ]
-    },
-    {
-      "id": "library.documents.cond_passport_rf_fields",
-      "type": "condition",
-      "description": "Если тип документа = паспорт РФ, проверяем паспортные поля и код подразделения",
-      "when": {
-        "all": [
-          "library.documents.pred_type_code_passport_rf"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.documents.series_required"
-        },
-        {
-          "condition": "library.documents.cond_series_format_if_present"
-        },
-        {
-          "rule": "library.documents.number_passport_rf_format"
-        },
-        {
-          "rule": "library.documents.issuer_code_required"
-        },
-        {
-          "condition": "library.documents.cond_issuer_code_format_if_present"
-        }
-      ]
-    },
-    {
-      "id": "library.documents.cond_series_format_if_present",
-      "type": "condition",
-      "description": "Если серия указана, то проверяем формат паспорта РФ",
-      "when": {
-        "all": [
-          "library.documents.pred_series_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.documents.series_passport_rf_format"
-        }
-      ]
-    },
-    {
-      "id": "library.documents.date_order",
-      "type": "rule",
-      "description": "Дата окончания действия документа должна быть позже даты выдачи",
-      "role": "check",
-      "operator": "field_greater_than_field",
-      "level": "ERROR",
-      "code": "BEN.IDDOC.DATE.ORDER",
-      "message": "Дата окончания действия документа должна быть позже даты выдачи",
-      "field": "beneficiary.idDoc.expireDate",
-      "value_field": "beneficiary.idDoc.issueDate"
-    },
-    {
-      "id": "library.documents.expire_date_format",
-      "type": "rule",
-      "description": "Дата окончания действия документа должна быть в формате YYYY-MM-DD",
-      "role": "check",
-      "operator": "matches_regex",
-      "level": "ERROR",
-      "code": "BEN.IDDOC.EXPIRE_DATE.FORMAT",
-      "message": "Дата окончания действия документа должна быть в формате YYYY-MM-DD",
-      "field": "beneficiary.idDoc.expireDate",
-      "value": "^\\d{4}-\\d{2}-\\d{2}$"
-    },
-    {
-      "id": "library.documents.is_foreign_bool",
-      "type": "rule",
-      "description": "Признак иностранного документа должен быть true или false",
-      "role": "check",
-      "operator": "in_dictionary",
-      "level": "ERROR",
-      "code": "BEN.IDDOC.IS_FOREIGN.BOOL",
-      "message": "Признак beneficiary.idDoc.isForeignIdDoc должен быть true или false",
-      "field": "beneficiary.idDoc.isForeignIdDoc",
-      "dictionary": {
-        "type": "static",
-        "id": "true_false"
-      }
-    },
-    {
-      "id": "library.documents.is_foreign_required",
-      "type": "rule",
-      "description": "Признак иностранного документа обязателен",
-      "role": "check",
-      "operator": "not_empty",
-      "level": "ERROR",
-      "code": "BEN.IDDOC.IS_FOREIGN.REQUIRED",
-      "message": "Необходимо заполнить beneficiary.idDoc.isForeignIdDoc",
-      "field": "beneficiary.idDoc.isForeignIdDoc"
-    },
-    {
-      "id": "library.documents.issue_date_format",
-      "type": "rule",
-      "description": "Дата выдачи документа должна быть в формате YYYY-MM-DD",
-      "role": "check",
-      "operator": "matches_regex",
-      "level": "ERROR",
-      "code": "BEN.IDDOC.ISSUE_DATE.FORMAT",
-      "message": "Дата выдачи документа должна быть в формате YYYY-MM-DD",
-      "field": "beneficiary.idDoc.issueDate",
-      "value": "^\\d{4}-\\d{2}-\\d{2}$"
-    },
-    {
-      "id": "library.documents.issue_date_gt_birth_date",
-      "type": "rule",
-      "description": "Дата выдачи документа должна быть позже даты рождения",
-      "role": "check",
-      "operator": "field_greater_than_field",
-      "level": "ERROR",
-      "code": "BEN.IDDOC.ISSUE_DATE.GT_BIRTH_DATE",
-      "message": "Дата выдачи документа должна быть позже даты рождения",
-      "field": "beneficiary.idDoc.issueDate",
-      "value_field": "beneficiary.fl.birthDate"
-    },
-    {
-      "id": "library.documents.issue_date_not_future",
-      "type": "rule",
-      "description": "Дата выдачи документа не должна быть больше текущей даты",
+      "description": "Крупный B2B-заказ требует подтверждения менеджера",
       "role": "check",
       "operator": "field_less_or_equal_than_field",
-      "level": "ERROR",
-      "code": "BEN.IDDOC.ISSUE_DATE.NOT_FUTURE",
-      "message": "Дата выдачи документа не должна быть больше текущей даты",
-      "field": "beneficiary.idDoc.issueDate",
-      "value_field": "$context.currentDate"
-    },
-    {
-      "id": "library.documents.issue_date_required",
-      "type": "rule",
-      "description": "Дата выдачи документа обязательна",
-      "role": "check",
-      "operator": "not_empty",
-      "level": "ERROR",
-      "code": "BEN.IDDOC.ISSUE_DATE.REQUIRED",
-      "message": "Не указана дата выдачи документа",
-      "field": "beneficiary.idDoc.issueDate"
-    },
-    {
-      "id": "library.documents.issuer_code_format",
-      "type": "rule",
-      "description": "Код подразделения должен быть в формате XXX-XXX",
-      "role": "check",
-      "operator": "matches_regex",
-      "level": "ERROR",
-      "code": "BEN.IDDOC.ISSUER_CODE.FORMAT",
-      "message": "Код подразделения должен быть в формате XXX-XXX и не может быть 000-000",
-      "field": "beneficiary.idDoc.issuerCode",
-      "value": "^(?!000-000)\\d{3}-\\d{3}$"
-    },
-    {
-      "id": "library.documents.issuer_code_required",
-      "type": "rule",
-      "description": "Код подразделения должен быть заполнен",
-      "role": "check",
-      "operator": "not_empty",
-      "level": "ERROR",
-      "code": "BEN.IDDOC.ISSUER_CODE.REQUIRED",
-      "message": "Необходимо заполнить код подразделения документа",
-      "field": "beneficiary.idDoc.issuerCode"
-    },
-    {
-      "id": "library.documents.issuer_no_extra_spaces",
-      "type": "rule",
-      "description": "Орган выдачи не должен содержать лишние пробелы",
-      "role": "check",
-      "operator": "matches_regex",
+      "field": "order.amount",
+      "value_field": "$context.largeOrderThreshold",
       "level": "WARNING",
-      "code": "BEN.IDDOC.ISSUER.SPACES",
-      "message": "Поле beneficiary.idDoc.issuer содержит лишние пробелы",
-      "field": "beneficiary.idDoc.issuer",
-      "value": "^(?!\\s)(?!.*\\s$)(?!.*\\s{2,}).+$"
+      "code": "8008",
+      "message": "С заказом свяжется менеджер для подтверждения"
     },
     {
-      "id": "library.documents.issuer_no_garbage_symbols",
+      "id": "entrypoints.checkout.b2b.organization.contract_number_required",
       "type": "rule",
-      "description": "Орган выдачи не должен содержать мусорные символы",
-      "role": "check",
-      "operator": "matches_regex",
-      "level": "WARNING",
-      "code": "BEN.IDDOC.ISSUER.SYMBOLS",
-      "message": "Поле beneficiary.idDoc.issuer содержит недопустимые символы",
-      "field": "beneficiary.idDoc.issuer",
-      "value": "^[A-Za-zА-Яа-яЁё0-9№.\\/\\- ]+$"
-    },
-    {
-      "id": "library.documents.issuer_required",
-      "type": "rule",
-      "description": "Орган выдачи документа обязателен",
+      "description": "Номер договора обязателен при отсрочке платежа",
       "role": "check",
       "operator": "not_empty",
+      "field": "organization.contractNumber",
       "level": "ERROR",
-      "code": "BEN.IDDOC.ISSUER.REQUIRED",
-      "message": "Не указан орган, выдавший документ",
-      "field": "beneficiary.idDoc.issuer"
+      "code": "8006",
+      "message": "Укажите номер договора для отсрочки платежа"
     },
     {
-      "id": "library.documents.number_passport_rf_format",
+      "id": "entrypoints.checkout.b2b.organization.inn_valid",
       "type": "rule",
-      "description": "Номер паспорта РФ должен содержать ровно 6 цифр и не быть 000000",
+      "description": "ИНН организации должен состоять из 10 цифр и иметь корректную контрольную сумму",
+      "role": "check",
+      "operator": "inn10_valid",
+      "field": "organization.inn",
+      "level": "ERROR",
+      "code": "8002",
+      "message": "Проверьте ИНН организации"
+    },
+    {
+      "id": "entrypoints.checkout.b2b.organization.kpp_format",
+      "type": "rule",
+      "description": "КПП организации должен состоять из 9 цифр",
       "role": "check",
       "operator": "matches_regex",
+      "field": "organization.kpp",
+      "value": "^\\d{9}$",
       "level": "ERROR",
-      "code": "BEN.IDDOC.NUMBER.PASSPORT_RF.FORMAT",
-      "message": "Номер паспорта РФ должен содержать ровно 6 цифр и не может быть 000000",
-      "field": "beneficiary.idDoc.number",
-      "value": "^(?!000000)\\d{6}$"
+      "code": "8003",
+      "message": "Проверьте КПП организации"
     },
     {
-      "id": "library.documents.number_required",
+      "id": "entrypoints.checkout.b2b.organization.legal_address_required",
       "type": "rule",
-      "description": "Номер документа обязателен",
+      "description": "Юридический адрес организации обязателен",
       "role": "check",
       "operator": "not_empty",
+      "field": "organization.legalAddress",
       "level": "ERROR",
-      "code": "BEN.IDDOC.NUMBER.REQUIRED",
-      "message": "Не указан номер документа",
-      "field": "beneficiary.idDoc.number"
+      "code": "8004",
+      "message": "Укажите юридический адрес организации"
     },
     {
-      "id": "library.documents.pred_expire_date_format_valid",
+      "id": "entrypoints.checkout.b2b.organization.name_required",
       "type": "rule",
-      "description": "Дата окончания действия документа в формате YYYY-MM-DD",
-      "role": "predicate",
-      "operator": "matches_regex",
-      "field": "beneficiary.idDoc.expireDate",
-      "value": "^\\\\d{4}-\\\\d{2}-\\\\d{2}$"
-    },
-    {
-      "id": "library.documents.pred_expire_date_present",
-      "type": "rule",
-      "description": "Дата окончания действия документа передана",
-      "role": "predicate",
+      "description": "Название организации обязательно",
+      "role": "check",
       "operator": "not_empty",
-      "field": "beneficiary.idDoc.expireDate"
+      "field": "organization.name",
+      "level": "ERROR",
+      "code": "8001",
+      "message": "Укажите название организации"
     },
     {
-      "id": "library.documents.pred_issue_date_format_valid",
+      "id": "entrypoints.checkout.b2b.payment.deferred_days_max",
       "type": "rule",
-      "description": "Дата выдачи документа в формате YYYY-MM-DD",
-      "role": "predicate",
-      "operator": "matches_regex",
-      "field": "beneficiary.idDoc.issueDate",
-      "value": "^\\\\d{4}-\\\\d{2}-\\\\d{2}$"
+      "description": "Отсрочка платежа не должна превышать предельный срок",
+      "role": "check",
+      "operator": "field_less_or_equal_than_field",
+      "field": "payment.deferredDays",
+      "value_field": "$context.maxDeferredDays",
+      "level": "ERROR",
+      "code": "8007",
+      "message": "Срок отсрочки больше допустимого"
     },
     {
-      "id": "library.documents.pred_issue_date_present",
+      "id": "entrypoints.checkout.b2b.payment.pred_deferred_days_positive",
       "type": "rule",
-      "description": "Дата выдачи документа указана",
+      "description": "Запрошена отсрочка платежа",
       "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.idDoc.issueDate"
+      "operator": "greater_than",
+      "field": "payment.deferredDays",
+      "value": 0
     },
     {
-      "id": "library.documents.pred_issuer_code_present",
+      "id": "entrypoints.checkout.b2b.payment.method_invoice",
       "type": "rule",
-      "description": "Код подразделения указан",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.idDoc.issuerCode"
-    },
-    {
-      "id": "library.documents.pred_issuer_present",
-      "type": "rule",
-      "description": "Орган выдачи документа указан",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.idDoc.issuer"
-    },
-    {
-      "id": "library.documents.pred_series_present",
-      "type": "rule",
-      "description": "Серия документа указана",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.idDoc.series"
-    },
-    {
-      "id": "library.documents.pred_type_code_domestic_group",
-      "type": "rule",
-      "description": "Код документа относится к отечественной группе документов 21–30",
-      "role": "predicate",
+      "description": "B2B-заказ оплачивается только по счёту",
+      "role": "check",
       "operator": "in_dictionary",
-      "field": "beneficiary.idDoc.typeCode",
+      "field": "payment.method",
       "dictionary": {
         "type": "static",
-        "id": "domestic_document_type_codes_fl"
-      }
+        "id": "library.dictionaries.b2b_payment_methods"
+      },
+      "level": "ERROR",
+      "code": "8005",
+      "message": "Для юридического лица доступна только оплата по счёту"
     },
     {
-      "id": "library.documents.pred_type_code_foreign_group",
+      "id": "entrypoints.checkout.b2b",
+      "type": "pipeline",
+      "description": "Проверка B2B-заказа юридического лица",
+      "entrypoint": true,
+      "strict": false,
+      "required_context": [
+        "minOrderAmount",
+        "maxDeferredDays",
+        "largeOrderThreshold"
+      ],
+      "flow": [
+        {
+          "pipeline": "library.checkout.pipe_order_basics",
+          "stepId": "order_basics"
+        },
+        {
+          "pipeline": "library.checkout.pipe_delivery_basics",
+          "stepId": "delivery_basics"
+        },
+        {
+          "rule": "entrypoints.checkout.b2b.organization.name_required",
+          "stepId": "b2b_name_required"
+        },
+        {
+          "rule": "entrypoints.checkout.b2b.organization.inn_valid",
+          "stepId": "b2b_inn_valid"
+        },
+        {
+          "rule": "entrypoints.checkout.b2b.organization.kpp_format",
+          "stepId": "b2b_kpp_format"
+        },
+        {
+          "rule": "entrypoints.checkout.b2b.organization.legal_address_required",
+          "stepId": "b2b_legal_address_required"
+        },
+        {
+          "rule": "entrypoints.checkout.b2b.payment.method_invoice",
+          "stepId": "b2b_payment_method_invoice"
+        },
+        {
+          "condition": "entrypoints.checkout.b2b.cond_deferred_payment_checks",
+          "stepId": "b2b_deferred_payment_checks"
+        },
+        {
+          "condition": "entrypoints.checkout.b2b.cond_large_order_if_amount_present",
+          "stepId": "b2b_large_order_if_amount_present"
+        }
+      ]
+    },
+    {
+      "id": "entrypoints.checkout.validation.payment.cond_cash_limit_for_courier",
+      "type": "condition",
+      "description": "Если выбраны курьер и наличные, проверить лимит оплаты",
+      "when": {
+        "all": [
+          "library.checkout.delivery.pred_type_courier",
+          "entrypoints.checkout.validation.payment.pred_method_cash",
+          "library.checkout.order.pred_amount_filled"
+        ]
+      },
+      "steps": [
+        {
+          "rule": "entrypoints.checkout.validation.payment.cash_limit"
+        }
+      ]
+    },
+    {
+      "id": "entrypoints.checkout.validation.payment.cash_limit",
       "type": "rule",
-      "description": "Код документа относится к группе иностранных документов 31–37, 99",
-      "role": "predicate",
+      "description": "Оплата наличными курьеру доступна только для заказов ниже лимита",
+      "role": "check",
+      "operator": "field_less_than_field",
+      "field": "order.amount",
+      "value_field": "$context.cashOnDeliveryLimit",
+      "level": "ERROR",
+      "code": "3002",
+      "message": "Для этой суммы выберите другой способ оплаты"
+    },
+    {
+      "id": "entrypoints.checkout.validation.payment.method_allowed",
+      "type": "rule",
+      "description": "Способ оплаты должен поддерживаться магазином",
+      "role": "check",
       "operator": "in_dictionary",
-      "field": "beneficiary.idDoc.typeCode",
+      "field": "payment.method",
       "dictionary": {
         "type": "static",
-        "id": "foreign_document_type_codes_fl"
-      }
+        "id": "library.dictionaries.payment_methods"
+      },
+      "level": "ERROR",
+      "code": "3001",
+      "message": "Выберите поддерживаемый способ оплаты"
     },
     {
-      "id": "library.documents.pred_type_code_passport_rf",
+      "id": "entrypoints.checkout.validation.payment.pred_method_cash",
       "type": "rule",
-      "description": "Тип документа паспорт РФ?",
+      "description": "Выбрана оплата наличными",
       "role": "predicate",
       "operator": "equals",
-      "field": "beneficiary.idDoc.typeCode",
-      "value": "21"
+      "field": "payment.method",
+      "value": "CASH"
     },
     {
-      "id": "library.documents.rule_is_foreign_false",
+      "id": "entrypoints.checkout.validation.promo.pred_code_filled",
       "type": "rule",
-      "description": "Для кодов 21–30 признак иностранного документа должен быть false",
-      "role": "check",
-      "operator": "equals",
-      "level": "ERROR",
-      "code": "BEN.IDDOC.IS_FOREIGN.CONSISTENT.DOMESTIC",
-      "message": "Для кодов документов 21–30 признак beneficiary.idDoc.isForeignIdDoc должен быть false",
-      "field": "beneficiary.idDoc.isForeignIdDoc",
-      "value": false
+      "description": "Промокод заполнен",
+      "role": "predicate",
+      "operator": "not_empty",
+      "field": "promo.code"
     },
     {
-      "id": "library.documents.rule_is_foreign_true",
+      "id": "entrypoints.checkout.validation.promo.code_format",
       "type": "rule",
-      "description": "Для кодов 31–37 и 99 признак иностранного документа должен быть true",
+      "description": "Промокод должен состоять из 4-12 заглавных латинских букв и цифр",
+      "role": "check",
+      "operator": "matches_regex",
+      "field": "promo.code",
+      "value": "^[A-Z0-9]{4,12}$",
+      "level": "ERROR",
+      "code": "5001",
+      "message": "Проверьте промокод"
+    },
+    {
+      "id": "entrypoints.checkout.validation.promo.cond_expired_if_expires_at_present",
+      "type": "condition",
+      "description": "Проверять срок действия только если он передан: иначе это дефект контракта, а не просроченный промокод",
+      "when": "entrypoints.checkout.validation.promo.pred_expires_at_filled",
+      "steps": [
+        {
+          "rule": "entrypoints.checkout.validation.promo.expired"
+        }
+      ]
+    },
+    {
+      "id": "entrypoints.checkout.validation.promo.expired",
+      "type": "rule",
+      "description": "Срок действия промокода не должен быть раньше текущей даты",
+      "role": "check",
+      "operator": "field_greater_or_equal_than_field",
+      "field": "promo.expiresAt",
+      "value_field": "$context.currentDate",
+      "level": "ERROR",
+      "code": "5002",
+      "message": "Срок действия промокода истёк"
+    },
+    {
+      "id": "entrypoints.checkout.validation.promo.pred_expires_at_filled",
+      "type": "rule",
+      "description": "Срок действия промокода передан",
+      "role": "predicate",
+      "operator": "not_empty",
+      "field": "promo.expiresAt"
+    },
+    {
+      "id": "entrypoints.checkout.validation.promo.expires_at_required",
+      "type": "rule",
+      "description": "Если промокод указан, вызывающая система обязана передать срок его действия",
+      "role": "check",
+      "operator": "not_empty",
+      "field": "promo.expiresAt",
+      "level": "ERROR",
+      "code": "5004",
+      "message": "Не удалось проверить промокод: данные промокода неполны"
+    },
+    {
+      "id": "entrypoints.checkout.validation.promo.pred_min_amount_filled",
+      "type": "rule",
+      "description": "Порог применения промокода передан",
+      "role": "predicate",
+      "operator": "not_empty",
+      "field": "promo.minAmount"
+    },
+    {
+      "id": "entrypoints.checkout.validation.promo.cond_min_amount_if_amount_present",
+      "type": "condition",
+      "description": "Сравнивать сумму заказа с порогом промокода только если переданы обе величины",
+      "when": {
+        "all": [
+          "library.checkout.order.pred_amount_filled",
+          "entrypoints.checkout.validation.promo.pred_min_amount_filled"
+        ]
+      },
+      "steps": [
+        {
+          "rule": "entrypoints.checkout.validation.promo.min_amount"
+        }
+      ]
+    },
+    {
+      "id": "entrypoints.checkout.validation.promo.min_amount_required",
+      "type": "rule",
+      "description": "Если промокод указан, вызывающая система обязана передать порог его применения",
+      "role": "check",
+      "operator": "not_empty",
+      "field": "promo.minAmount",
+      "level": "ERROR",
+      "code": "5005",
+      "message": "Не удалось проверить промокод: данные промокода неполны"
+    },
+    {
+      "id": "entrypoints.checkout.validation.promo.min_amount",
+      "type": "rule",
+      "description": "Сумма заказа должна быть не ниже порога промокода",
+      "role": "check",
+      "operator": "field_greater_or_equal_than_field",
+      "field": "order.amount",
+      "value_field": "promo.minAmount",
+      "level": "WARNING",
+      "code": "5003",
+      "message": "Скидка по промокоду не применится к этому заказу"
+    },
+    {
+      "id": "entrypoints.checkout.validation.promo.cond_promo_checks",
+      "type": "condition",
+      "description": "Если промокод заполнен, проверить полноту его данных, формат, срок и порог суммы",
+      "when": "entrypoints.checkout.validation.promo.pred_code_filled",
+      "steps": [
+        {
+          "rule": "entrypoints.checkout.validation.promo.code_format"
+        },
+        {
+          "rule": "entrypoints.checkout.validation.promo.expires_at_required"
+        },
+        {
+          "rule": "entrypoints.checkout.validation.promo.min_amount_required"
+        },
+        {
+          "condition": "entrypoints.checkout.validation.promo.cond_expired_if_expires_at_present"
+        },
+        {
+          "condition": "entrypoints.checkout.validation.promo.cond_min_amount_if_amount_present"
+        }
+      ]
+    },
+    {
+      "id": "entrypoints.checkout.validation",
+      "type": "pipeline",
+      "description": "Проверка заказа при оформлении (валидация чекаута)",
+      "entrypoint": true,
+      "strict": false,
+      "required_context": [
+        "currentDate",
+        "minOrderAmount",
+        "cashOnDeliveryLimit"
+      ],
+      "flow": [
+        {
+          "pipeline": "library.checkout.pipe_customer_basics",
+          "stepId": "customer_basics"
+        },
+        {
+          "pipeline": "library.checkout.pipe_order_basics",
+          "stepId": "order_basics"
+        },
+        {
+          "rule": "entrypoints.checkout.validation.payment.method_allowed",
+          "stepId": "payment_method_allowed"
+        },
+        {
+          "pipeline": "library.checkout.pipe_delivery_basics",
+          "stepId": "delivery_basics"
+        },
+        {
+          "condition": "entrypoints.checkout.validation.payment.cond_cash_limit_for_courier",
+          "stepId": "payment_cash_limit_for_courier"
+        },
+        {
+          "condition": "entrypoints.checkout.validation.promo.cond_promo_checks",
+          "stepId": "promo_checks"
+        }
+      ]
+    },
+    {
+      "id": "entrypoints.customer.profile.customer.pred_birth_date_filled",
+      "type": "rule",
+      "description": "Дата рождения заполнена",
+      "role": "predicate",
+      "operator": "not_empty",
+      "field": "customer.birthDate"
+    },
+    {
+      "id": "entrypoints.customer.profile.customer.cond_birth_date_if_present",
+      "type": "condition",
+      "description": "Если дата рождения заполнена, проверить, что она не в будущем",
+      "when": "entrypoints.customer.profile.customer.pred_birth_date_filled",
+      "steps": [
+        {
+          "rule": "entrypoints.customer.profile.customer.birth_date_not_future"
+        }
+      ]
+    },
+    {
+      "id": "entrypoints.customer.profile.customer.birth_date_not_future",
+      "type": "rule",
+      "description": "Дата рождения не должна быть в будущем",
+      "role": "check",
+      "operator": "field_less_or_equal_than_field",
+      "field": "customer.birthDate",
+      "value_field": "$context.currentDate",
+      "level": "ERROR",
+      "code": "6001",
+      "message": "Дата рождения не может быть в будущем"
+    },
+    {
+      "id": "entrypoints.customer.profile.customer.consent_given",
+      "type": "rule",
+      "description": "Согласие на обработку персональных данных обязательно",
       "role": "check",
       "operator": "equals",
+      "field": "customer.consentGiven",
+      "value": true,
       "level": "ERROR",
-      "code": "BEN.IDDOC.IS_FOREIGN.CONSISTENT",
-      "message": "Для кодов документов 31–37 и 99 признак beneficiary.idDoc.isForeignIdDoc должен быть true",
-      "field": "beneficiary.idDoc.isForeignIdDoc",
+      "code": "6002",
+      "message": "Подтвердите согласие на обработку персональных данных"
+    },
+    {
+      "id": "entrypoints.customer.profile.customer.cond_newsletter_email_if_opt_in",
+      "type": "condition",
+      "description": "Если включена подписка, предупредить при отсутствии почты",
+      "when": "entrypoints.customer.profile.customer.pred_newsletter_opt_in",
+      "steps": [
+        {
+          "rule": "entrypoints.customer.profile.customer.newsletter_email_warning"
+        }
+      ]
+    },
+    {
+      "id": "entrypoints.customer.profile.customer.newsletter_email_warning",
+      "type": "rule",
+      "description": "Подписка на рассылку требует электронной почты",
+      "role": "check",
+      "operator": "not_empty",
+      "field": "customer.email",
+      "level": "WARNING",
+      "code": "6006",
+      "message": "Рассылка не активируется без электронной почты"
+    },
+    {
+      "id": "entrypoints.customer.profile.customer.pred_newsletter_opt_in",
+      "type": "rule",
+      "description": "Покупатель включил подписку на рассылку",
+      "role": "predicate",
+      "operator": "equals",
+      "field": "customer.newsletterOptIn",
       "value": true
     },
     {
-      "id": "library.documents.series_passport_rf_format",
+      "id": "entrypoints.customer.profile.customer.preferred_channel_allowed",
       "type": "rule",
-      "description": "Серия паспорта РФ должна содержать ровно 4 цифры",
-      "role": "check",
-      "operator": "matches_regex",
-      "level": "ERROR",
-      "code": "BEN.IDDOC.SERIES.PASSPORT_RF.FORMAT",
-      "message": "Серия паспорта РФ должна содержать 4 цифры и не может быть 0000",
-      "field": "beneficiary.idDoc.series",
-      "value": "^(?!0000)\\d{4}$"
-    },
-    {
-      "id": "library.documents.series_required",
-      "type": "rule",
-      "description": "Серия документа обязательна",
-      "role": "check",
-      "operator": "not_empty",
-      "level": "ERROR",
-      "code": "BEN.IDDOC.SERIES.REQUIRED",
-      "message": "Не указана серия документа",
-      "field": "beneficiary.idDoc.series"
-    },
-    {
-      "id": "library.documents.type_code_in_dictionary",
-      "type": "rule",
-      "description": "Код типа документа должен входить в допустимый справочник",
+      "description": "Предпочитаемый канал связи должен поддерживаться магазином",
       "role": "check",
       "operator": "in_dictionary",
-      "level": "ERROR",
-      "code": "BEN.IDDOC.TYPE_CODE.DICT",
-      "message": "Код типа документа должен входить в допустимый классификатор",
-      "field": "beneficiary.idDoc.typeCode",
+      "field": "customer.preferredChannel",
       "dictionary": {
         "type": "static",
-        "id": "document_type_codes_fl"
-      }
-    },
-    {
-      "id": "library.documents.type_code_not_35",
-      "type": "rule",
-      "description": "Код типа документа не должен быть равен 35",
-      "role": "check",
-      "operator": "not_equals",
-      "level": "EXCEPTION",
-      "code": "BEN.IDDOC.TYPE_CODE.NOT_35",
-      "message": "Код типа документа 35 не допускается для регистрации бенефициара",
-      "field": "beneficiary.idDoc.typeCode",
-      "value": "35"
-    },
-    {
-      "id": "library.documents.type_code_required",
-      "type": "rule",
-      "description": "Код типа документа обязателен",
-      "role": "check",
-      "operator": "not_empty",
-      "level": "ERROR",
-      "code": "BEN.IDDOC.TYPE_CODE.REQUIRED",
-      "message": "Не указан код типа документа",
-      "field": "beneficiary.idDoc.typeCode"
-    },
-    {
-      "id": "library.documents.type_name_required",
-      "type": "rule",
-      "description": "Наименование типа документа обязательно",
-      "role": "check",
-      "operator": "not_empty",
-      "level": "ERROR",
-      "code": "BEN.IDDOC.TYPE_NAME.REQUIRED",
-      "message": "Не указано наименование типа документа",
-      "field": "beneficiary.idDoc.typeName"
-    },
-    {
-      "id": "library.fl.birth_date_format",
-      "type": "rule",
-      "description": "Дата рождения должна быть в формате YYYY-MM-DD",
-      "role": "check",
-      "operator": "matches_regex",
-      "level": "ERROR",
-      "code": "FL.BIRTH_DATE.FORMAT",
-      "message": "Дата рождения должна быть в формате YYYY-MM-DD",
-      "field": "beneficiary.fl.birthDate",
-      "value": "^\\d{4}-\\d{2}-\\d{2}$"
-    },
-    {
-      "id": "library.fl.birth_date_required",
-      "type": "rule",
-      "description": "Дата рождения обязательна",
-      "role": "check",
-      "operator": "not_empty",
-      "level": "ERROR",
-      "code": "FL.BIRTH_DATE.REQUIRED",
-      "message": "Не указана дата рождения физического лица",
-      "field": "beneficiary.fl.birthDate"
-    },
-    {
-      "id": "library.fl.birth_place_required",
-      "type": "rule",
-      "description": "Место рождения обязательно",
-      "role": "check",
-      "operator": "not_empty",
-      "level": "ERROR",
-      "code": "FL.BIRTH_PLACE.REQUIRED",
-      "message": "Не указано место рождения",
-      "field": "beneficiary.fl.birthPlace"
-    },
-    {
-      "id": "library.fl.citizenship_code_format",
-      "type": "rule",
-      "description": "Код гражданства должен быть двухбуквенным кодом страны",
-      "role": "check",
-      "operator": "matches_regex",
-      "level": "ERROR",
-      "code": "FL.CITIZENSHIP_CODE.FORMAT",
-      "message": "Код гражданства должен быть в формате ISO 3166-1 alpha-2",
-      "field": "beneficiary.fl.citizenshipCode",
-      "value": "^[A-Z]{2}$"
-    },
-    {
-      "id": "library.fl.citizenship_required",
-      "type": "rule",
-      "description": "Код гражданства должен быть заполнен",
-      "role": "check",
-      "operator": "not_empty",
-      "level": "EXCEPTION",
-      "code": "FL.CITIZENSHIP.REQUIRED",
-      "message": "Необходимо заполнить код гражданства",
-      "field": "beneficiary.fl.citizenshipCode"
-    },
-    {
-      "id": "library.fl.cond_birth_date_if_present",
-      "type": "condition",
-      "description": "Если дата рождения указана, то проверяем формат",
-      "when": {
-        "all": [
-          "library.fl.pred_birth_date_present"
-        ]
+        "id": "library.dictionaries.contact_channels"
       },
+      "level": "ERROR",
+      "code": "6003",
+      "message": "Выберите поддерживаемый канал связи"
+    },
+    {
+      "id": "entrypoints.customer.profile.customer.pred_preferred_channel_call",
+      "type": "rule",
+      "description": "Предпочитаемый канал связи — звонок",
+      "role": "predicate",
+      "operator": "equals",
+      "field": "customer.preferredChannel",
+      "value": "CALL"
+    },
+    {
+      "id": "entrypoints.customer.profile.customer.pred_preferred_channel_email",
+      "type": "rule",
+      "description": "Предпочитаемый канал связи — электронная почта",
+      "role": "predicate",
+      "operator": "equals",
+      "field": "customer.preferredChannel",
+      "value": "EMAIL"
+    },
+    {
+      "id": "entrypoints.customer.profile.customer.pred_preferred_channel_sms",
+      "type": "rule",
+      "description": "Предпочитаемый канал связи — SMS",
+      "role": "predicate",
+      "operator": "equals",
+      "field": "customer.preferredChannel",
+      "value": "SMS"
+    },
+    {
+      "id": "entrypoints.customer.profile.customer.cond_preferred_email_contact",
+      "type": "condition",
+      "description": "Если выбран канал EMAIL, проверить наличие почты",
+      "when": "entrypoints.customer.profile.customer.pred_preferred_channel_email",
       "steps": [
         {
-          "rule": "library.fl.birth_date_format"
+          "rule": "entrypoints.customer.profile.customer.preferred_email_required"
         }
       ]
     },
     {
-      "id": "library.fl.cond_first_name_if_present",
+      "id": "entrypoints.customer.profile.customer.preferred_email_required",
+      "type": "rule",
+      "description": "Если выбран канал EMAIL, электронная почта обязательна",
+      "role": "check",
+      "operator": "not_empty",
+      "field": "customer.email",
+      "level": "ERROR",
+      "code": "6005",
+      "message": "Укажите электронную почту для выбранного канала связи"
+    },
+    {
+      "id": "entrypoints.customer.profile.customer.cond_preferred_phone_contact",
       "type": "condition",
-      "description": "Если имя указано, то проверяем формат и длину",
-      "when": {
-        "all": [
-          "library.fl.pred_first_name_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.fl.first_name_length_max"
-        },
-        {
-          "rule": "library.fl.first_name_letters_hyphen"
-        }
-      ]
-    },
-    {
-      "id": "library.fl.cond_inn_format_if_length_ok",
-      "type": "condition",
-      "description": "Если длина ИНН корректна, то проверяем повторы и контрольный разряд",
-      "when": {
-        "all": [
-          "library.fl.pred_inn_length_valid"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.fl.inn_not_repeated"
-        },
-        {
-          "rule": "library.fl.inn_valid"
-        }
-      ]
-    },
-    {
-      "id": "library.fl.cond_inn_if_present",
-      "type": "condition",
-      "description": "Если ИНН указан, то проверяем длину, затем повторы и контрольный разряд",
-      "when": {
-        "all": [
-          "library.fl.pred_inn_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.fl.inn_length_12"
-        },
-        {
-          "condition": "library.fl.cond_inn_format_if_length_ok"
-        }
-      ]
-    },
-    {
-      "id": "library.fl.cond_last_name_if_present",
-      "type": "condition",
-      "description": "Если фамилия указана, то проверяем формат и длину",
-      "when": {
-        "all": [
-          "library.fl.pred_last_name_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.fl.last_name_length_max"
-        },
-        {
-          "rule": "library.fl.last_name_letters_hyphen"
-        }
-      ]
-    },
-    {
-      "id": "library.fl.cond_middle_name_if_present",
-      "type": "condition",
-      "description": "Если отчество указано, проверяем его длину",
-      "when": {
-        "all": [
-          "library.fl.pred_middle_name_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.fl.middle_name_length"
-        }
-      ]
-    },
-    {
-      "id": "library.fl.first_name_length_max",
-      "type": "rule",
-      "description": "Имя не должно превышать 100 символов",
-      "role": "check",
-      "operator": "length_max",
-      "level": "ERROR",
-      "code": "FL.FIRST_NAME.LENGTH_MAX",
-      "message": "Имя не должно превышать 100 символов",
-      "field": "beneficiary.fl.firstName",
-      "value": 100
-    },
-    {
-      "id": "library.fl.first_name_letters_hyphen",
-      "type": "rule",
-      "description": "Имя должно содержать только буквы, пробелы и дефис",
-      "role": "check",
-      "operator": "matches_regex",
-      "level": "ERROR",
-      "code": "FL.FIRST_NAME.FORMAT",
-      "message": "Допустимы буквы, пробел и дефис; начальные и конечные пробелы не допускаются",
-      "field": "beneficiary.fl.firstName",
-      "value": "^[A-Za-zА-Яа-яЁё](?:[A-Za-zА-Яа-яЁё -]*[A-Za-zА-Яа-яЁё])?$"
-    },
-    {
-      "id": "library.fl.first_name_required",
-      "type": "rule",
-      "description": "Имя обязательно",
-      "role": "check",
-      "operator": "not_empty",
-      "level": "ERROR",
-      "code": "FL.FIRST_NAME.REQUIRED",
-      "message": "Не указано имя физического лица",
-      "field": "beneficiary.fl.firstName"
-    },
-    {
-      "id": "library.fl.inn_length_12",
-      "type": "rule",
-      "description": "ИНН ФЛ должен содержать ровно 12 цифр",
-      "role": "check",
-      "operator": "matches_regex",
-      "level": "ERROR",
-      "code": "FL.INN.LENGTH_12",
-      "message": "ИНН ФЛ должен содержать ровно 12 цифр",
-      "field": "beneficiary.inn",
-      "value": "^\\d{12}$"
-    },
-    {
-      "id": "library.fl.inn_not_repeated",
-      "type": "rule",
-      "description": "ИНН ФЛ не должен состоять из одинаковых цифр или нулей",
-      "role": "check",
-      "operator": "matches_regex",
-      "level": "ERROR",
-      "code": "FL.INN.NOT_REPEATED",
-      "message": "ИНН ФЛ не должен состоять из одинаковых цифр или нулей",
-      "field": "beneficiary.inn",
-      "value": "^(?!([0-9])\\1{11}$)\\d{12}$"
-    },
-    {
-      "id": "library.fl.inn_required",
-      "type": "rule",
-      "description": "ИНН физического лица-резидента обязателен",
-      "role": "check",
-      "operator": "not_empty",
-      "level": "ERROR",
-      "code": "FL.INN.REQUIRED",
-      "message": "Не указан ИНН физического лица",
-      "field": "beneficiary.inn"
-    },
-    {
-      "id": "library.fl.inn_valid",
-      "type": "rule",
-      "description": "ИНН физического лица должен быть корректным",
-      "role": "check",
-      "operator": "valid_inn",
-      "level": "ERROR",
-      "code": "FL.INN.INVALID",
-      "message": "Некорректный ИНН физического лица",
-      "field": "beneficiary.inn"
-    },
-    {
-      "id": "library.fl.last_name_length_max",
-      "type": "rule",
-      "description": "Фамилия не должна превышать 100 символов",
-      "role": "check",
-      "operator": "length_max",
-      "level": "ERROR",
-      "code": "FL.LAST_NAME.LENGTH_MAX",
-      "message": "Фамилия не должна превышать 100 символов",
-      "field": "beneficiary.fl.lastName",
-      "value": 100
-    },
-    {
-      "id": "library.fl.last_name_letters_hyphen",
-      "type": "rule",
-      "description": "Фамилия должна содержать только буквы, пробелы и дефис",
-      "role": "check",
-      "operator": "matches_regex",
-      "level": "ERROR",
-      "code": "FL.LAST_NAME.FORMAT",
-      "message": "Допустимы буквы, пробел и дефис; начальные и конечные пробелы не допускаются",
-      "field": "beneficiary.fl.lastName",
-      "value": "^[A-Za-zА-Яа-яЁё](?:[A-Za-zА-Яа-яЁё -]*[A-Za-zА-Яа-яЁё])?$"
-    },
-    {
-      "id": "library.fl.last_name_required",
-      "type": "rule",
-      "description": "Фамилия обязательна",
-      "role": "check",
-      "operator": "not_empty",
-      "level": "ERROR",
-      "code": "FL.LAST_NAME.REQUIRED",
-      "message": "Не указана фамилия физического лица",
-      "field": "beneficiary.fl.lastName"
-    },
-    {
-      "id": "library.fl.middle_name_length",
-      "type": "rule",
-      "description": "Отчество не должно быть длиннее 255 символов",
-      "role": "check",
-      "operator": "length_max",
-      "level": "ERROR",
-      "code": "FL.MIDDLE_NAME.LENGTH",
-      "message": "Отчество слишком длинное",
-      "field": "beneficiary.fl.middleName",
-      "value": 255
-    },
-    {
-      "id": "library.fl.precheck_identity_any",
-      "type": "rule",
-      "description": "Для FL_RESIDENT должен быть указан хотя бы один идентификатор: inn или beneficiary.idDoc.number",
-      "role": "check",
-      "operator": "any_filled",
-      "level": "EXCEPTION",
-      "code": "FL.IDENTITY.MIN.ONE",
-      "message": "Для FL_RESIDENT должен быть указан inn или beneficiary.idDoc.number",
-      "fields": [
-        "beneficiary.inn",
-        "beneficiary.idDoc.number"
-      ],
-      "paths": [
-        "beneficiary.inn",
-        "beneficiary.idDoc.number"
-      ]
-    },
-    {
-      "id": "library.fl.pred_birth_date_present",
-      "type": "rule",
-      "description": "Дата рождения указана",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.fl.birthDate"
-    },
-    {
-      "id": "library.fl.pred_birth_place_present",
-      "type": "rule",
-      "description": "Место рождения указано",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.fl.birthPlace"
-    },
-    {
-      "id": "library.fl.pred_citizenship_present",
-      "type": "rule",
-      "description": "Гражданство указано",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.fl.citizenshipCode"
-    },
-    {
-      "id": "library.fl.pred_first_name_present",
-      "type": "rule",
-      "description": "Имя указано",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.fl.firstName"
-    },
-    {
-      "id": "library.fl.pred_inn_length_valid",
-      "type": "rule",
-      "description": "ИНН содержит ровно 12 цифр",
-      "role": "predicate",
-      "operator": "matches_regex",
-      "field": "beneficiary.inn",
-      "value": "^\\d{12}$"
-    },
-    {
-      "id": "library.fl.pred_inn_present",
-      "type": "rule",
-      "description": "ИНН указан",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.inn"
-    },
-    {
-      "id": "library.fl.pred_last_name_present",
-      "type": "rule",
-      "description": "Фамилия указана",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.fl.lastName"
-    },
-    {
-      "id": "library.fl.pred_middle_name_present",
-      "type": "rule",
-      "description": "Отчество указано",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.fl.middleName"
-    },
-    {
-      "id": "library.tax.cond_foreign_address_if_present",
-      "type": "condition",
-      "description": "Если адрес в иностранном государстве указан, проверяем запрет США",
-      "when": {
-        "all": [
-          "library.tax.pred_foreign_address_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.tax.foreign_address_not_us"
-        }
-      ]
-    },
-    {
-      "id": "library.tax.cond_foreign_tax_trigger_block",
-      "type": "condition",
-      "description": "Если указан иностранный документ или адрес не РФ, то проверяем данные иностранного налогового резидентства",
+      "description": "Если выбран канал SMS или CALL, проверить наличие телефона",
       "when": {
         "any": [
-          "library.tax.pred_is_foreign_id_doc_true",
-          "library.tax.pred_registration_country_non_ru",
-          "library.tax.pred_postal_country_non_ru"
+          "entrypoints.customer.profile.customer.pred_preferred_channel_sms",
+          "entrypoints.customer.profile.customer.pred_preferred_channel_call"
         ]
       },
       "steps": [
         {
-          "rule": "library.tax.foreign_country_required"
-        },
-        {
-          "rule": "library.tax.foreign_country_format"
-        },
-        {
-          "rule": "library.tax.foreign_country_not_us"
-        },
-        {
-          "rule": "library.tax.foreign_tin_or_reason"
-        },
-        {
-          "rule": "library.tax.foreign_address_or_postal_required"
-        },
-        {
-          "condition": "library.tax.cond_foreign_address_if_present"
-        },
-        {
-          "condition": "library.tax.cond_tin_if_present"
-        },
-        {
-          "condition": "library.tax.cond_reason_if_present"
+          "rule": "entrypoints.customer.profile.customer.preferred_phone_required"
         }
       ]
     },
     {
-      "id": "library.tax.cond_phone_foreign_required_if_triggered_and_rf_phone_missing",
-      "type": "condition",
-      "description": "Если телефон РФ не указан и при этом указан иностранный документ или адрес не РФ, то требуем иностранный телефон",
-      "when": {
-        "all": [
-          "library.tax.pred_phone_missing",
-          {
-            "any": [
-              "library.tax.pred_is_foreign_id_doc_true",
-              "library.tax.pred_registration_country_non_ru",
-              "library.tax.pred_postal_country_non_ru"
-            ]
-          }
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.tax.phone_foreign_required"
-        }
-      ]
-    },
-    {
-      "id": "library.tax.cond_reason_if_present",
-      "type": "condition",
-      "description": "Если указана причина отсутствия иностранного ИНН, проверяем справочник",
-      "when": {
-        "all": [
-          "library.tax.pred_reason_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.tax.tin_absence_reason_dict"
-        }
-      ]
-    },
-    {
-      "id": "library.tax.cond_tin_if_present",
-      "type": "condition",
-      "description": "Если иностранный ИНН указан, проверяем длину",
-      "when": {
-        "all": [
-          "library.tax.pred_tin_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.tax.foreign_tin_length"
-        }
-      ]
-    },
-    {
-      "id": "library.tax.foreign_address_not_us",
+      "id": "entrypoints.customer.profile.customer.preferred_phone_required",
       "type": "rule",
-      "description": "Адрес в иностранном государстве не должен содержать указание на США",
+      "description": "Если выбран канал SMS или CALL, телефон обязателен",
       "role": "check",
-      "operator": "matches_regex",
-      "level": "EXCEPTION",
-      "code": "BEN.TAX.FOREIGN_ADDRESS.NOT_US",
-      "message": "Адрес в иностранном государстве не должен указывать на США",
-      "field": "beneficiary.tax.foreignResidencies0.address",
-      "value": "^(?!.*(?:США|USA|Usa|usa|US|U\\.S\\.)).*$"
-    },
-    {
-      "id": "library.tax.foreign_address_or_postal_required",
-      "type": "rule",
-      "description": "При foreign-tax trigger должен быть указан адрес в иностранном государстве или почтовый адрес",
-      "role": "check",
-      "operator": "any_filled",
+      "operator": "not_empty",
+      "field": "customer.phone",
       "level": "ERROR",
-      "code": "BEN.TAX.FOREIGN_ADDRESS.OR_POSTAL_REQUIRED",
-      "message": "Укажите адрес в иностранном государстве или почтовый адрес",
-      "fields": [
-        "beneficiary.tax.foreignResidencies0.address",
-        "beneficiary.contacts.postalAddress"
-      ]
+      "code": "6004",
+      "message": "Укажите телефон для выбранного канала связи"
     },
     {
-      "id": "library.tax.foreign_address_required",
-      "type": "rule",
-      "description": "При foreign-tax trigger требуется адрес в иностранном государстве",
-      "role": "check",
-      "operator": "not_empty",
-      "level": "ERROR",
-      "code": "BEN.TAX.FOREIGN_ADDRESS.REQUIRED",
-      "message": "Не указан адрес в иностранном государстве",
-      "field": "beneficiary.tax.foreignResidencies0.address"
-    },
-    {
-      "id": "library.tax.foreign_country_format",
-      "type": "rule",
-      "description": "Код страны иностранного налогового резидентства должен быть двухбуквенным",
-      "role": "check",
-      "operator": "matches_regex",
-      "level": "ERROR",
-      "code": "BEN.TAX.FOREIGN_COUNTRY.FORMAT",
-      "message": "Код страны иностранного налогового резидентства должен быть в формате ISO 3166-1 alpha-2",
-      "field": "beneficiary.tax.foreignResidencies0.countryCode",
-      "value": "^[A-Z]{2}$"
-    },
-    {
-      "id": "library.tax.foreign_country_not_us",
-      "type": "rule",
-      "description": "Код страны иностранного налогового резидентства не должен быть US",
-      "role": "check",
-      "operator": "not_equals",
-      "level": "EXCEPTION",
-      "code": "BEN.TAX.FOREIGN_COUNTRY.NOT_US",
-      "message": "Иностранное налоговое резидентство США должно блокироваться отдельно и не допускается в этом блоке",
-      "field": "beneficiary.tax.foreignResidencies0.countryCode",
-      "value": "US"
-    },
-    {
-      "id": "library.tax.foreign_country_required",
-      "type": "rule",
-      "description": "При иностранном налоговом резидентстве требуется первая страна налогового резидентства",
-      "role": "check",
-      "operator": "not_empty",
-      "level": "EXCEPTION",
-      "code": "BEN.TAX.FOREIGN_COUNTRY.REQUIRED",
-      "message": "Не указана страна иностранного налогового резидентства",
-      "field": "beneficiary.tax.foreignResidencies0.countryCode"
-    },
-    {
-      "id": "library.tax.foreign_tax_resident_bool",
-      "type": "rule",
-      "description": "Признак иностранного налогового резидентства должен быть булевым (true/false)",
-      "role": "check",
-      "operator": "in_dictionary",
-      "level": "EXCEPTION",
-      "code": "BEN.TAX.FOREIGN_TAX_RESIDENT.BOOL",
-      "message": "Признак иностранного налогового резидентства должен иметь значение true или false",
-      "field": "beneficiary.tax.foreignTaxResident",
-      "dictionary": {
-        "type": "static",
-        "id": "true_false"
-      }
-    },
-    {
-      "id": "library.tax.foreign_tin_length",
-      "type": "rule",
-      "description": "Иностранный ИНН не должен быть длиннее 64 символов",
-      "role": "check",
-      "operator": "length_max",
-      "level": "ERROR",
-      "code": "BEN.TAX.FOREIGN_TIN.LENGTH",
-      "message": "Иностранный ИНН слишком длинный",
-      "field": "beneficiary.tax.foreignResidencies0.tin",
-      "value": 64
-    },
-    {
-      "id": "library.tax.foreign_tin_or_reason",
-      "type": "rule",
-      "description": "Должен быть указан иностранный ИНН или причина его отсутствия",
-      "role": "check",
-      "operator": "any_filled",
-      "level": "EXCEPTION",
-      "code": "BEN.TAX.FOREIGN_TIN.OR_REASON",
-      "message": "Укажите иностранный ИНН или причину его отсутствия",
-      "fields": [
-        "beneficiary.tax.foreignResidencies0.tin",
-        "beneficiary.tax.foreignResidencies0.tinAbsenceReason"
-      ],
-      "paths": [
-        "beneficiary.tax.foreignResidencies0.tin",
-        "beneficiary.tax.foreignResidencies0.tinAbsenceReason"
-      ]
-    },
-    {
-      "id": "library.tax.phone_foreign_required",
-      "type": "rule",
-      "description": "При foreign-trigger и отсутствии телефона РФ требуется иностранный телефон",
-      "role": "check",
-      "operator": "not_empty",
-      "level": "ERROR",
-      "code": "BEN.CONTACTS.PHONE_FOREIGN.REQUIRED",
-      "message": "Не указан иностранный телефон. Он обязателен при отсутствии телефона РФ и наличии foreign-trigger",
-      "field": "beneficiary.contacts.phoneForeign"
-    },
-    {
-      "id": "library.tax.pred_foreign_address_present",
-      "type": "rule",
-      "description": "Адрес в иностранном государстве заполнен",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.tax.foreignResidencies0.address"
-    },
-    {
-      "id": "library.tax.pred_foreign_tax_true",
-      "type": "rule",
-      "description": "Указано иностранное налоговое резидентство",
-      "role": "predicate",
-      "operator": "equals",
-      "field": "beneficiary.tax.foreignTaxResident",
-      "value": true
-    },
-    {
-      "id": "library.tax.pred_is_foreign_id_doc_true",
-      "type": "rule",
-      "description": "Есть признак иностранного документа",
-      "role": "predicate",
-      "operator": "equals",
-      "field": "beneficiary.idDoc.isForeignIdDoc",
-      "value": true
-    },
-    {
-      "id": "library.tax.pred_phone_missing",
-      "type": "rule",
-      "description": "Телефон РФ отсутствует",
-      "role": "predicate",
-      "operator": "is_empty",
-      "field": "beneficiary.contacts.phone"
-    },
-    {
-      "id": "library.tax.pred_postal_country_non_ru",
-      "type": "rule",
-      "description": "Страна почтового адреса указана и не равна RU",
-      "role": "predicate",
-      "operator": "matches_regex",
-      "field": "beneficiary.contacts.postalAddressCountryCode",
-      "value": "^(?!RU$)[A-Z]{2}$"
-    },
-    {
-      "id": "library.tax.pred_reason_present",
-      "type": "rule",
-      "description": "Указана причина отсутствия иностранного ИНН",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.tax.foreignResidencies0.tinAbsenceReason"
-    },
-    {
-      "id": "library.tax.pred_registration_country_non_ru",
-      "type": "rule",
-      "description": "Страна адреса регистрации указана и не равна RU",
-      "role": "predicate",
-      "operator": "matches_regex",
-      "field": "beneficiary.address.registration.countryCode",
-      "value": "^(?!RU$)[A-Z]{2}$"
-    },
-    {
-      "id": "library.tax.pred_tin_present",
-      "type": "rule",
-      "description": "Иностранный ИНН указан",
-      "role": "predicate",
-      "operator": "not_empty",
-      "field": "beneficiary.tax.foreignResidencies0.tin"
-    },
-    {
-      "id": "library.tax.tin_absence_reason_dict",
-      "type": "rule",
-      "description": "Код причины отсутствия иностранного ИНН должен входить в справочник",
-      "role": "check",
-      "operator": "in_dictionary",
-      "level": "EXCEPTION",
-      "code": "BEN.TAX.TIN_ABSENCE_REASON.DICT",
-      "message": "Некорректный код причины отсутствия иностранного ИНН",
-      "field": "beneficiary.tax.foreignResidencies0.tinAbsenceReason",
-      "dictionary": {
-        "type": "static",
-        "id": "tin_absence_reasons"
-      }
-    },
-    {
-      "id": "library.tax.us_resident_bool",
-      "type": "rule",
-      "description": "Признак резидентства США должен быть булевым (true/false)",
-      "role": "check",
-      "operator": "in_dictionary",
-      "level": "EXCEPTION",
-      "code": "BEN.TAX.US_RESIDENT.BOOL",
-      "message": "Признак резидентства США должен иметь значение true или false",
-      "field": "beneficiary.tax.usResident",
-      "dictionary": {
-        "type": "static",
-        "id": "true_false"
-      }
-    },
-    {
-      "id": "library.tax.us_tax_resident_bool",
-      "type": "rule",
-      "description": "Признак налогового резидентства США должен быть булевым (true/false)",
-      "role": "check",
-      "operator": "in_dictionary",
-      "level": "EXCEPTION",
-      "code": "BEN.TAX.US_TAX_RESIDENT.BOOL",
-      "message": "Признак налогового резидентства США должен иметь значение true или false",
-      "field": "beneficiary.tax.usTaxResident",
-      "dictionary": {
-        "type": "static",
-        "id": "true_false"
-      }
-    },
-    {
-      "id": "entrypoints.fl_resident.full_validation",
+      "id": "entrypoints.customer.profile",
       "type": "pipeline",
-      "description": "FL_RESIDENT / full_validation",
-      "strict": false,
-      "flow": [
-        {
-          "rule": "library.common.beneficiary_type_required"
-        },
-        {
-          "rule": "library.common.beneficiary_type_supported"
-        },
-        {
-          "rule": "type_is_fl_resident"
-        },
-        {
-          "pipeline": "internal.fl_resident.blocks.contacts_and_status"
-        },
-        {
-          "pipeline": "internal.fl_resident.blocks.identity_core"
-        },
-        {
-          "pipeline": "internal.fl_resident.blocks.identity_document"
-        },
-        {
-          "pipeline": "internal.fl_resident.blocks.address"
-        },
-        {
-          "pipeline": "internal.fl_resident.blocks.tax_flags"
-        }
-      ],
+      "description": "Проверка профиля покупателя",
       "entrypoint": true,
+      "strict": false,
       "required_context": [
         "currentDate"
-      ]
-    },
-    {
-      "id": "entrypoints.fl_resident.full_validation.type_is_fl_resident",
-      "type": "rule",
-      "description": "Тип бенефициара должен быть FL_RESIDENT",
-      "role": "check",
-      "operator": "equals",
-      "level": "EXCEPTION",
-      "code": "FL.TYPE.MISMATCH",
-      "message": "Бенефициар должен быть физическим лицом, резидентом РФ (FL_RESIDENT)",
-      "field": "beneficiary.type",
-      "value": "FL_RESIDENT"
-    },
-    {
-      "id": "internal.fl_resident.blocks.address",
-      "type": "pipeline",
-      "description": "Проверки адреса регистрации и почтового адреса",
-      "strict": false,
+      ],
       "flow": [
         {
-          "rule": "library.address.registration_address_required"
+          "pipeline": "library.checkout.pipe_customer_basics",
+          "stepId": "customer_basics"
         },
         {
-          "condition": "registration_country_if_present"
+          "condition": "entrypoints.customer.profile.customer.cond_birth_date_if_present",
+          "stepId": "customer_birth_date_if_present"
         },
         {
-          "condition": "library.address.cond_postal_address_if_present"
+          "rule": "entrypoints.customer.profile.customer.consent_given",
+          "stepId": "customer_consent_given"
         },
         {
-          "condition": "library.address.cond_postal_if_present"
+          "rule": "entrypoints.customer.profile.customer.preferred_channel_allowed",
+          "stepId": "customer_preferred_channel_allowed"
         },
         {
-          "condition": "library.address.cond_region_code_if_present"
+          "condition": "entrypoints.customer.profile.customer.cond_preferred_phone_contact",
+          "stepId": "customer_preferred_phone_contact"
         },
         {
-          "condition": "library.address.cond_region_name_if_present"
+          "condition": "entrypoints.customer.profile.customer.cond_preferred_email_contact",
+          "stepId": "customer_preferred_email_contact"
         },
         {
-          "condition": "library.address.cond_city_if_present"
-        },
-        {
-          "condition": "library.address.cond_locality_if_present"
-        },
-        {
-          "condition": "library.address.cond_street_if_present"
-        },
-        {
-          "condition": "library.address.cond_house_if_present"
-        },
-        {
-          "condition": "library.address.cond_building_if_present"
-        },
-        {
-          "condition": "library.address.cond_apartment_if_present"
-        },
-        {
-          "condition": "library.address.cond_address_line_if_present"
-        }
-      ],
-      "entrypoint": false
-    },
-    {
-      "id": "internal.fl_resident.blocks.address.registration_country_if_present",
-      "type": "condition",
-      "description": "Если страна адреса регистрации заполнена, проверяем формат и запрет США",
-      "when": {
-        "all": [
-          "library.address.pred_country_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "library.address.country"
-        },
-        {
-          "rule": "registration_country_not_us"
+          "condition": "entrypoints.customer.profile.customer.cond_newsletter_email_if_opt_in",
+          "stepId": "customer_newsletter_email_if_opt_in"
         }
       ]
     },
     {
-      "id": "internal.fl_resident.blocks.address.registration_country_not_us",
+      "id": "entrypoints.return.request.return.amount_not_greater_than_order",
       "type": "rule",
-      "description": "Страна адреса регистрации не должна быть US",
+      "description": "Сумма возврата не должна превышать сумму заказа",
       "role": "check",
-      "operator": "not_equals",
-      "level": "EXCEPTION",
-      "code": "BEN.ADDRESS.COUNTRY.NOT_US",
-      "message": "Адрес США не допускается для FL_RESIDENT",
-      "field": "beneficiary.address.registration.countryCode",
-      "value": "US"
+      "operator": "field_less_or_equal_than_field",
+      "field": "return.amount",
+      "value_field": "order.amount",
+      "level": "ERROR",
+      "code": "7007",
+      "message": "Сумма возврата больше суммы заказа"
     },
     {
-      "id": "internal.fl_resident.blocks.contacts_and_status",
-      "type": "pipeline",
-      "description": "Общие проверки контактов и статуса связи",
-      "strict": false,
-      "flow": [
-        {
-          "rule": "library.common.participation_required"
-        },
-        {
-          "condition": "library.common.cond_participation_if_present"
-        },
-        {
-          "rule": "library.common.contacts_any"
-        },
-        {
-          "condition": "library.common.cond_phone_if_present"
-        },
-        {
-          "condition": "library.common.cond_email_if_present"
-        },
-        {
-          "rule": "library.common.status_start_required"
-        },
-        {
-          "condition": "library.common.cond_status_start_if_present"
-        },
-        {
-          "condition": "library.common.cond_status_end_if_present"
-        }
-      ],
-      "entrypoint": false
-    },
-    {
-      "id": "internal.fl_resident.blocks.identity_core.birth_place_if_present",
-      "type": "condition",
-      "description": "Если место рождения указано, то проверяем ограничения",
-      "when": {
-        "all": [
-          "library.fl.pred_birth_place_present"
-        ]
-      },
-      "steps": [
-        {
-          "rule": "birth_place_not_usa"
-        }
-      ]
-    },
-    {
-      "id": "internal.fl_resident.blocks.identity_core.birth_place_not_usa",
+      "id": "entrypoints.return.request.return.category_returnable",
       "type": "rule",
-      "description": "Место рождения не должно содержать указание на США",
+      "description": "Категория товара должна быть разрешена к возврату без брака",
+      "role": "check",
+      "operator": "in_dictionary",
+      "field": "return.items[*].category",
+      "dictionary": {
+        "type": "static",
+        "id": "library.dictionaries.returnable_categories"
+      },
+      "level": "ERROR",
+      "code": "7008",
+      "message": "Эту категорию товара можно вернуть только при браке"
+    },
+    {
+      "id": "entrypoints.return.request.return.items_qty_positive",
+      "type": "rule",
+      "description": "Количество к возврату должно быть больше нуля для каждой позиции",
+      "role": "check",
+      "operator": "greater_than",
+      "field": "return.items[*].returnQty",
+      "value": 0,
+      "aggregate": {
+        "mode": "EACH",
+        "onEmpty": "FAIL"
+      },
+      "level": "ERROR",
+      "code": "7005",
+      "message": "Укажите количество товара к возврату"
+    },
+    {
+      "id": "entrypoints.return.request.return.items_sku_format",
+      "type": "rule",
+      "description": "Артикул возвращаемой позиции должен соответствовать формату магазина",
       "role": "check",
       "operator": "matches_regex",
-      "level": "EXCEPTION",
-      "code": "FL.BIRTH_PLACE.NOT_USA",
-      "message": "Место рождения не должно указывать на США",
-      "field": "beneficiary.fl.birthPlace",
-      "value": "^(?!.*(?:США|USA|Usa|usa|US|U\\.S\\.)).*$"
+      "field": "return.items[*].sku",
+      "value": "^[A-Z]{3}-\\d{4}$",
+      "level": "ERROR",
+      "code": "7006",
+      "message": "Проверьте артикул возвращаемого товара"
     },
     {
-      "id": "internal.fl_resident.blocks.identity_core.citizenship_if_present",
+      "id": "entrypoints.return.request.return.cond_non_defect_checks",
       "type": "condition",
-      "description": "Если гражданство указано, то проверяем формат и ограничения",
-      "when": {
-        "all": [
-          "library.fl.pred_citizenship_present"
-        ]
-      },
+      "description": "Если возврат не из-за брака, проверить категорию и показать предупреждение",
+      "when": "entrypoints.return.request.return.pred_reason_not_defect",
       "steps": [
         {
-          "rule": "library.fl.citizenship_code_format"
+          "rule": "entrypoints.return.request.return.category_returnable"
         },
         {
-          "rule": "citizenship_not_us"
+          "rule": "entrypoints.return.request.return.non_defect_quality_check_warning"
         }
       ]
     },
     {
-      "id": "internal.fl_resident.blocks.identity_core.citizenship_not_us",
+      "id": "entrypoints.return.request.return.non_defect_quality_check_warning",
       "type": "rule",
-      "description": "Код гражданства не должен быть US",
+      "description": "При возврате без брака деньги вернутся после проверки качества",
       "role": "check",
-      "operator": "not_equals",
-      "level": "EXCEPTION",
-      "code": "FL.CITIZENSHIP.NOT_US",
-      "message": "Гражданство США не допускается для FL_RESIDENT",
-      "field": "beneficiary.fl.citizenshipCode",
-      "value": "US"
+      "operator": "equals",
+      "field": "return.reason",
+      "value": "DEFECT",
+      "level": "WARNING",
+      "code": "7009",
+      "message": "Деньги вернутся после проверки товара, это может занять до двух недель"
     },
     {
-      "id": "internal.fl_resident.blocks.identity_core",
+      "id": "entrypoints.return.request.return.order_id_required",
+      "type": "rule",
+      "description": "Номер заказа обязателен для заявки на возврат",
+      "role": "check",
+      "operator": "not_empty",
+      "field": "order.id",
+      "level": "ERROR",
+      "code": "7001",
+      "message": "Не указан номер заказа"
+    },
+    {
+      "id": "entrypoints.return.request.return.order_status_returnable",
+      "type": "rule",
+      "description": "Состояние заказа должно допускать возврат",
+      "role": "check",
+      "operator": "in_dictionary",
+      "field": "order.status",
+      "dictionary": {
+        "type": "static",
+        "id": "library.dictionaries.returnable_order_statuses"
+      },
+      "level": "ERROR",
+      "code": "7002",
+      "message": "Возврат доступен только для полученного заказа"
+    },
+    {
+      "id": "entrypoints.return.request.return.reason_allowed",
+      "type": "rule",
+      "description": "Причина возврата должна поддерживаться магазином",
+      "role": "check",
+      "operator": "in_dictionary",
+      "field": "return.reason",
+      "dictionary": {
+        "type": "static",
+        "id": "library.dictionaries.return_reasons"
+      },
+      "level": "ERROR",
+      "code": "7004",
+      "message": "Выберите причину возврата из списка"
+    },
+    {
+      "id": "entrypoints.return.request.return.pred_reason_not_defect",
+      "type": "rule",
+      "description": "Причина возврата не связана с браком",
+      "role": "predicate",
+      "operator": "not_equals",
+      "field": "return.reason",
+      "value": "DEFECT"
+    },
+    {
+      "id": "entrypoints.return.request.return.return_deadline_not_expired",
+      "type": "rule",
+      "description": "Срок возврата не должен быть раньше текущей даты",
+      "role": "check",
+      "operator": "field_greater_or_equal_than_field",
+      "field": "order.returnDeadline",
+      "value_field": "$context.currentDate",
+      "level": "ERROR",
+      "code": "7003",
+      "message": "Срок возврата по этому заказу истёк"
+    },
+    {
+      "id": "entrypoints.return.request",
       "type": "pipeline",
-      "description": "Основные персональные данные",
+      "description": "Проверка заявки на возврат товара",
+      "entrypoint": true,
+      "strict": false,
+      "required_context": [
+        "currentDate"
+      ],
+      "flow": [
+        {
+          "pipeline": "library.checkout.pipe_customer_basics",
+          "stepId": "customer_basics"
+        },
+        {
+          "rule": "entrypoints.return.request.return.order_id_required",
+          "stepId": "return_order_id_required"
+        },
+        {
+          "rule": "entrypoints.return.request.return.order_status_returnable",
+          "stepId": "return_order_status_returnable"
+        },
+        {
+          "rule": "entrypoints.return.request.return.return_deadline_not_expired",
+          "stepId": "return_deadline_not_expired"
+        },
+        {
+          "rule": "entrypoints.return.request.return.reason_allowed",
+          "stepId": "return_reason_allowed"
+        },
+        {
+          "rule": "entrypoints.return.request.return.items_qty_positive",
+          "stepId": "return_items_qty_positive"
+        },
+        {
+          "rule": "entrypoints.return.request.return.items_sku_format",
+          "stepId": "return_items_sku_format"
+        },
+        {
+          "rule": "entrypoints.return.request.return.amount_not_greater_than_order",
+          "stepId": "return_amount_not_greater_than_order"
+        },
+        {
+          "condition": "entrypoints.return.request.return.cond_non_defect_checks",
+          "stepId": "return_non_defect_checks"
+        }
+      ]
+    },
+    {
+      "id": "library.checkout.customer.cond_email_format_if_present",
+      "type": "condition",
+      "description": "Если электронная почта заполнена, проверить её формат",
+      "when": "library.checkout.customer.pred_email_filled",
+      "steps": [
+        {
+          "rule": "library.checkout.customer.email_format"
+        }
+      ]
+    },
+    {
+      "id": "library.checkout.customer.cond_phone_format_if_present",
+      "type": "condition",
+      "description": "Если телефон заполнен, проверить его формат",
+      "when": "library.checkout.customer.pred_phone_filled",
+      "steps": [
+        {
+          "rule": "library.checkout.customer.phone_format"
+        }
+      ]
+    },
+    {
+      "id": "library.checkout.delivery.cond_courier_checks",
+      "type": "condition",
+      "description": "Проверки, применимые только к курьерской доставке",
+      "when": "library.checkout.delivery.pred_type_courier",
+      "steps": [
+        {
+          "rule": "library.checkout.delivery.address_required"
+        },
+        {
+          "rule": "library.checkout.delivery.region_allowed"
+        }
+      ]
+    },
+    {
+      "id": "library.checkout.delivery.cond_pickup_checks",
+      "type": "condition",
+      "description": "Проверки, применимые только к самовывозу",
+      "when": "library.checkout.delivery.pred_type_pickup",
+      "steps": [
+        {
+          "rule": "library.checkout.delivery.pickup_point_required"
+        }
+      ]
+    },
+    {
+      "id": "library.checkout.order.cond_amount_min_if_present",
+      "type": "condition",
+      "description": "Если сумма заказа заполнена, проверить минимальную сумму",
+      "when": "library.checkout.order.pred_amount_filled",
+      "steps": [
+        {
+          "rule": "library.checkout.order.amount_min"
+        }
+      ]
+    },
+    {
+      "id": "library.checkout.customer.contact_required",
+      "type": "rule",
+      "description": "Должен быть указан хотя бы один способ связи",
+      "role": "check",
+      "operator": "any_filled",
+      "fields": [
+        "customer.phone",
+        "customer.email"
+      ],
+      "level": "ERROR",
+      "code": "1002",
+      "message": "Укажите телефон или электронную почту"
+    },
+    {
+      "id": "library.checkout.customer.email_format",
+      "type": "rule",
+      "description": "Электронная почта должна быть похожа на настоящий адрес",
+      "role": "check",
+      "operator": "matches_regex",
+      "field": "customer.email",
+      "value": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+      "level": "ERROR",
+      "code": "1004",
+      "message": "Проверьте адрес электронной почты"
+    },
+    {
+      "id": "library.checkout.customer.name_required",
+      "type": "rule",
+      "description": "Имя покупателя обязательно",
+      "role": "check",
+      "operator": "not_empty",
+      "field": "customer.name",
+      "level": "ERROR",
+      "code": "1001",
+      "message": "Укажите имя получателя"
+    },
+    {
+      "id": "library.checkout.customer.phone_format",
+      "type": "rule",
+      "description": "Телефон должен быть российским мобильным номером",
+      "role": "check",
+      "operator": "matches_regex",
+      "field": "customer.phone",
+      "value": "^\\+7\\d{10}$",
+      "level": "ERROR",
+      "code": "1003",
+      "message": "Проверьте номер телефона"
+    },
+    {
+      "id": "library.checkout.delivery.address_required",
+      "type": "rule",
+      "description": "Адрес обязателен для курьерской доставки",
+      "role": "check",
+      "operator": "not_empty",
+      "field": "delivery.address",
+      "level": "ERROR",
+      "code": "4002",
+      "message": "Укажите адрес доставки"
+    },
+    {
+      "id": "library.checkout.delivery.pickup_point_required",
+      "type": "rule",
+      "description": "Пункт выдачи обязателен для самовывоза",
+      "role": "check",
+      "operator": "not_empty",
+      "field": "delivery.pickupPointId",
+      "level": "ERROR",
+      "code": "4004",
+      "message": "Выберите пункт выдачи"
+    },
+    {
+      "id": "library.checkout.delivery.region_allowed",
+      "type": "rule",
+      "description": "Регион должен входить в зону курьерской доставки",
+      "role": "check",
+      "operator": "in_dictionary",
+      "field": "delivery.regionCode",
+      "dictionary": {
+        "type": "static",
+        "id": "library.dictionaries.courier_region_codes"
+      },
+      "level": "ERROR",
+      "code": "4003",
+      "message": "Курьерская доставка недоступна в выбранном регионе"
+    },
+    {
+      "id": "library.checkout.delivery.type_allowed",
+      "type": "rule",
+      "description": "Способ доставки должен поддерживаться магазином",
+      "role": "check",
+      "operator": "in_dictionary",
+      "field": "delivery.type",
+      "dictionary": {
+        "type": "static",
+        "id": "library.dictionaries.delivery_types"
+      },
+      "level": "ERROR",
+      "code": "4001",
+      "message": "Выберите поддерживаемый способ доставки"
+    },
+    {
+      "id": "library.dictionaries.b2b_payment_methods",
+      "type": "dictionary",
+      "description": "Поддерживаемые способы оплаты для B2B-заказа",
+      "entries": [
+        "INVOICE"
+      ]
+    },
+    {
+      "id": "library.dictionaries.contact_channels",
+      "type": "dictionary",
+      "description": "Поддерживаемые каналы связи с покупателем",
+      "entries": [
+        "CALL",
+        "SMS",
+        "EMAIL"
+      ]
+    },
+    {
+      "id": "library.dictionaries.courier_region_codes",
+      "type": "dictionary",
+      "description": "Регионы, доступные для курьерской доставки",
+      "entries": [
+        "77",
+        "50",
+        "78",
+        "47",
+        "66"
+      ]
+    },
+    {
+      "id": "library.dictionaries.delivery_types",
+      "type": "dictionary",
+      "description": "Поддерживаемые способы доставки",
+      "entries": [
+        "COURIER",
+        "PICKUP"
+      ]
+    },
+    {
+      "id": "library.dictionaries.order_currencies",
+      "type": "dictionary",
+      "description": "Поддерживаемые валюты заказа",
+      "entries": [
+        "RUB"
+      ]
+    },
+    {
+      "id": "library.dictionaries.payment_methods",
+      "type": "dictionary",
+      "description": "Поддерживаемые способы оплаты",
+      "entries": [
+        "CARD",
+        "SBP",
+        "CASH"
+      ]
+    },
+    {
+      "id": "library.dictionaries.return_reasons",
+      "type": "dictionary",
+      "description": "Поддерживаемые причины возврата",
+      "entries": [
+        "DEFECT",
+        "WRONG_ITEM",
+        "NOT_SUITED",
+        "CHANGED_MIND"
+      ]
+    },
+    {
+      "id": "library.dictionaries.returnable_categories",
+      "type": "dictionary",
+      "description": "Категории товаров, разрешённые к возврату без брака",
+      "entries": [
+        "BOOKS",
+        "STATIONERY",
+        "TOYS",
+        "OFFICE"
+      ]
+    },
+    {
+      "id": "library.dictionaries.returnable_order_statuses",
+      "type": "dictionary",
+      "description": "Состояния заказа, допускающие возврат",
+      "entries": [
+        "DELIVERED",
+        "PICKED_UP"
+      ]
+    },
+    {
+      "id": "library.checkout.order.amount_min",
+      "type": "rule",
+      "description": "Сумма заказа должна быть не ниже минимальной суммы из контекста",
+      "role": "check",
+      "operator": "field_greater_or_equal_than_field",
+      "field": "order.amount",
+      "value_field": "$context.minOrderAmount",
+      "level": "ERROR",
+      "code": "2002",
+      "message": "Сумма заказа меньше минимальной"
+    },
+    {
+      "id": "library.checkout.order.amount_required",
+      "type": "rule",
+      "description": "Сумма заказа обязательна",
+      "role": "check",
+      "operator": "not_empty",
+      "field": "order.amount",
+      "level": "ERROR",
+      "code": "2001",
+      "message": "Не указана сумма заказа"
+    },
+    {
+      "id": "library.checkout.order.currency_allowed",
+      "type": "rule",
+      "description": "Валюта заказа должна поддерживаться магазином",
+      "role": "check",
+      "operator": "in_dictionary",
+      "field": "order.currency",
+      "dictionary": {
+        "type": "static",
+        "id": "library.dictionaries.order_currencies"
+      },
+      "level": "ERROR",
+      "code": "2003",
+      "message": "Магазин принимает оплату только в рублях"
+    },
+    {
+      "id": "library.checkout.order.items_qty_positive",
+      "type": "rule",
+      "description": "Корзина не должна быть пустой, количество каждой позиции должно быть больше нуля",
+      "role": "check",
+      "operator": "greater_than",
+      "field": "order.items[*].qty",
+      "value": 0,
+      "aggregate": {
+        "mode": "EACH",
+        "onEmpty": "FAIL"
+      },
+      "level": "ERROR",
+      "code": "2004",
+      "message": "Корзина пуста или количество товара указано неверно"
+    },
+    {
+      "id": "library.checkout.order.items_sku_format",
+      "type": "rule",
+      "description": "Артикул каждой позиции должен соответствовать формату магазина",
+      "role": "check",
+      "operator": "matches_regex",
+      "field": "order.items[*].sku",
+      "value": "^[A-Z]{3}-\\d{4}$",
+      "level": "ERROR",
+      "code": "2005",
+      "message": "Проверьте артикул товара"
+    },
+    {
+      "id": "library.checkout.pipe_customer_basics",
+      "type": "pipeline",
+      "description": "Общие проверки покупателя: имя, наличие контакта и форматы контактов",
+      "entrypoint": false,
       "strict": false,
       "flow": [
         {
-          "rule": "library.fl.inn_required"
+          "rule": "library.checkout.customer.name_required",
+          "stepId": "customer_name_required"
         },
         {
-          "condition": "library.fl.cond_inn_if_present"
+          "rule": "library.checkout.customer.contact_required",
+          "stepId": "customer_contact_required"
         },
         {
-          "rule": "library.fl.last_name_required"
+          "condition": "library.checkout.customer.cond_phone_format_if_present",
+          "stepId": "customer_phone_format_if_present"
         },
         {
-          "condition": "library.fl.cond_last_name_if_present"
-        },
-        {
-          "rule": "library.fl.first_name_required"
-        },
-        {
-          "condition": "library.fl.cond_first_name_if_present"
-        },
-        {
-          "condition": "library.fl.cond_middle_name_if_present"
-        },
-        {
-          "rule": "library.fl.birth_date_required"
-        },
-        {
-          "condition": "library.fl.cond_birth_date_if_present"
-        },
-        {
-          "rule": "library.fl.birth_place_required"
-        },
-        {
-          "condition": "birth_place_if_present"
-        },
-        {
-          "rule": "library.fl.citizenship_required"
-        },
-        {
-          "condition": "citizenship_if_present"
+          "condition": "library.checkout.customer.cond_email_format_if_present",
+          "stepId": "customer_email_format_if_present"
         }
-      ],
-      "entrypoint": false
+      ]
     },
     {
-      "id": "internal.fl_resident.blocks.identity_document",
+      "id": "library.checkout.pipe_delivery_basics",
       "type": "pipeline",
-      "description": "Проверка документа удостоверяющего личность",
+      "description": "Общие проверки доставки: используются и в обычном, и в B2B-заказе",
+      "entrypoint": false,
       "strict": false,
       "flow": [
         {
-          "rule": "library.documents.type_code_required"
+          "rule": "library.checkout.delivery.type_allowed",
+          "stepId": "delivery_type_allowed"
         },
         {
-          "rule": "library.documents.type_code_in_dictionary"
+          "condition": "library.checkout.delivery.cond_courier_checks",
+          "stepId": "delivery_courier_checks"
         },
         {
-          "rule": "library.documents.type_code_not_35"
-        },
-        {
-          "rule": "library.documents.is_foreign_required"
-        },
-        {
-          "condition": "library.documents.cond_foreign_doc_consistency"
-        },
-        {
-          "condition": "library.documents.cond_domestic_doc_consistency"
-        },
-        {
-          "rule": "library.documents.type_name_required"
-        },
-        {
-          "rule": "library.documents.number_required"
-        },
-        {
-          "rule": "library.documents.issuer_required"
-        },
-        {
-          "condition": "library.documents.cond_issuer_if_present"
-        },
-        {
-          "rule": "library.documents.issue_date_required"
-        },
-        {
-          "condition": "library.documents.cond_issue_date_if_present"
-        },
-        {
-          "condition": "library.documents.cond_expire_date_if_present"
-        },
-        {
-          "condition": "library.documents.cond_passport_rf_fields"
-        },
-        {
-          "rule": "library.documents.is_foreign_bool"
+          "condition": "library.checkout.delivery.cond_pickup_checks",
+          "stepId": "delivery_pickup_checks"
         }
-      ],
-      "entrypoint": false
+      ]
     },
     {
-      "id": "internal.fl_resident.blocks.tax_flags",
+      "id": "library.checkout.pipe_order_basics",
       "type": "pipeline",
-      "description": "Регуляторные флаги и иностранное налоговое резидентство",
+      "description": "Общие проверки корзины и суммы заказа: используются и в обычном, и в B2B-заказе",
+      "entrypoint": false,
       "strict": false,
+      "required_context": [
+        "minOrderAmount"
+      ],
       "flow": [
         {
-          "rule": "library.tax.us_tax_resident_bool"
+          "rule": "library.checkout.order.amount_required",
+          "stepId": "order_amount_required"
         },
         {
-          "rule": "us_tax_resident_not_true"
+          "condition": "library.checkout.order.cond_amount_min_if_present",
+          "stepId": "order_amount_min_if_present"
         },
         {
-          "rule": "library.tax.us_resident_bool"
+          "rule": "library.checkout.order.currency_allowed",
+          "stepId": "order_currency_allowed"
         },
         {
-          "rule": "us_resident_not_true"
+          "rule": "library.checkout.order.items_qty_positive",
+          "stepId": "order_items_qty_positive"
         },
         {
-          "condition": "library.tax.cond_foreign_tax_trigger_block"
-        },
-        {
-          "condition": "library.tax.cond_phone_foreign_required_if_triggered_and_rf_phone_missing"
-        },
-        {
-          "condition": "library.common.cond_phone_foreign_if_present"
+          "rule": "library.checkout.order.items_sku_format",
+          "stepId": "order_items_sku_format"
         }
-      ],
-      "entrypoint": false
+      ]
     },
     {
-      "id": "internal.fl_resident.blocks.tax_flags.us_resident_not_true",
+      "id": "library.checkout.customer.pred_email_filled",
       "type": "rule",
-      "description": "Признак резидентства США не должен быть true",
-      "role": "check",
-      "operator": "not_equals",
-      "level": "EXCEPTION",
-      "code": "BEN.TAX.US_RESIDENT.NOT_TRUE",
-      "message": "Признак резидентства США не допускается для FL_RESIDENT",
-      "field": "beneficiary.tax.usResident",
-      "value": true
+      "description": "Электронная почта заполнена",
+      "role": "predicate",
+      "operator": "not_empty",
+      "field": "customer.email"
     },
     {
-      "id": "internal.fl_resident.blocks.tax_flags.us_tax_resident_not_true",
+      "id": "library.checkout.customer.pred_phone_filled",
       "type": "rule",
-      "description": "Признак налогового резидентства США не должен быть true",
-      "role": "check",
-      "operator": "not_equals",
-      "level": "EXCEPTION",
-      "code": "BEN.TAX.US_TAX_RESIDENT.NOT_TRUE",
-      "message": "Признак налогового резидентства США не допускается для FL_RESIDENT",
-      "field": "beneficiary.tax.usTaxResident",
-      "value": true
+      "description": "Телефон заполнен",
+      "role": "predicate",
+      "operator": "not_empty",
+      "field": "customer.phone"
+    },
+    {
+      "id": "library.checkout.delivery.pred_type_courier",
+      "type": "rule",
+      "description": "Выбрана курьерская доставка",
+      "role": "predicate",
+      "operator": "equals",
+      "field": "delivery.type",
+      "value": "COURIER"
+    },
+    {
+      "id": "library.checkout.delivery.pred_type_pickup",
+      "type": "rule",
+      "description": "Выбран самовывоз",
+      "role": "predicate",
+      "operator": "equals",
+      "field": "delivery.type",
+      "value": "PICKUP"
+    },
+    {
+      "id": "library.checkout.order.pred_amount_filled",
+      "type": "rule",
+      "description": "Сумма заказа заполнена",
+      "role": "predicate",
+      "operator": "not_empty",
+      "field": "order.amount"
     }
   ],
   "meta": {
-    "projectId": "nominal-beneficiaries-rules",
-    "rulesetVersion": "1.0.0",
-    "projectTitle": "Бенефициары ном. счетов (FL_RESIDENT)",
-    "description": "Пакет правил проверок заявок на регистрацию бенефициаров номинальных счетов. В этом наборе пока чтто есть только стартовый пакет правил для профиля FL_RESIDENT. Пакет рассчитан как новая база для дальнейшего развития остальных профилей"
+    "projectId": "polka-checkout",
+    "projectTitle": "Полка — проверки",
+    "description": "Пакет правил магазина «Полка»: оформление заказа, профиль покупателя, возврат, B2B-заказ",
+    "rulesetVersion": "1.1.0"
   }
 }

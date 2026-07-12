@@ -1,0 +1,35 @@
+{
+  "context": {
+    "pipelineId": "entrypoints.checkout.validation",
+    "currentDate": "2026-07-12",
+    "minOrderAmount": 500,
+    "cashOnDeliveryLimit": 15000
+  },
+  "payload": {
+    "customer": {
+      "name": "Иван Петров",
+      "phone": "+79161234567",
+      "email": null
+    },
+    "delivery": {
+      "type": "PICKUP",
+      "regionCode": null,
+      "address": null,
+      "pickupPointId": "PVZ-77-001"
+    },
+    "payment": {
+      "method": "CARD"
+    },
+    "order": {
+      "amount": 800,
+      "currency": "RUB",
+      "items": []
+    }
+  },
+  "expect": {
+    "status": "ERROR",
+    "issues": [
+      { "code": "2004", "field": "order.items[*].qty", "level": "ERROR" }
+    ]
+  }
+}

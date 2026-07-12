@@ -1,50 +1,91 @@
 # Testing guide
 
-## Current gates
+## Required gate
 
-Run before deployment:
+Run before commit and deploy:
 
 ```bash
 npm test
 ```
 
-What it covers today:
+Current coverage:
 
-- `snapshot.json` and `build-info.json` consistency;
-- boot through `jsonspecs.compileSnapshot()`;
+- `snapshot.json` and `build-info.json` describe the same Polka build;
+- snapshot boots through `jsonspecs.compileSnapshot()`;
+- all bundled `samples/*.json` execute through HTTP and match expected statuses/issues;
 - `/health`;
-- `/v1/validate`;
-- absence of trace by default;
-- ruleset provenance in HTTP responses;
-- engine `ABORT` surfaced as HTTP 500;
-- rejection of malformed requests;
-- rejection of HTTP `trace: "verbose"`;
-- basic trace without raw payload values;
-- custom identifier operators using `ctx.get()`.
+- `/docs`;
+- `/openapi.json`;
+- `/v1/meta`;
+- `/v1/samples`;
+- no trace by default;
+- `trace: "basic"` does not expose raw payload values;
+- `trace: "verbose"` is rejected;
+- malformed requests return 400;
+- engine `ABORT` returns HTTP 500 with structured jsonspecs result;
+- custom operator `inn10_valid` reads fields through `ctx.get()`.
+
+## Manual local smoke
+
+```bash
+npm start
+```
+
+In another terminal:
+
+```bash
+curl -s http://127.0.0.1:3000/health
+curl -s http://127.0.0.1:3000/v1/meta | jq '.project, .entrypoints[].id'
+curl -s -X POST http://127.0.0.1:3000/v1/validate \
+  -H 'Content-Type: application/json' \
+  --data-binary @samples/checkout.error.json | jq '.status, .issues[].code'
+```
+
+Open:
+
+```text
+http://127.0.0.1:3000/docs
+```
+
+## Docker smoke
+
+```bash
+docker build -t polka-jsonspecs-demo .
+docker run --rm -p 3000:3000 polka-jsonspecs-demo
+```
+
+Then run the manual smoke commands against `http://127.0.0.1:3000`.
+
+## Deployment smoke
+
+After Coolify deploy:
+
+```bash
+curl -s https://polka-demo.vladimirandreevich.ru/health
+curl -s https://polka-demo.vladimirandreevich.ru/v1/meta | jq '.project.projectId'
+curl -s -X POST https://polka-demo.vladimirandreevich.ru/v1/validate \
+  -H 'Content-Type: application/json' \
+  --data-binary @samples/checkout.ok.json | jq '.status'
+```
+
+Expected:
+
+```text
+health.ok = true
+projectId = polka-checkout
+status = OK
+```
+
+Also verify:
+
+```text
+https://polka-demo.vladimirandreevich.ru/docs
+https://polka-demo.vladimirandreevich.ru/openapi.json
+```
 
 ## Recommended additions
 
-### P1
-
-- Boot failure tests for:
-  - missing snapshot file;
-  - invalid JSON snapshot;
-  - empty `artifacts`;
-  - snapshot hash mismatch;
-  - incompatible `engine.minVersion`.
-- HTTP request-size test for the current `2mb` JSON body limit.
-- Docker smoke test:
-  - build image;
-  - start container;
-  - check `/health`;
-  - run one `/v1/validate` request.
-- Registry materialization test that `npm run deps:registry` installs the exact `config.jsonspecsVersion`.
-
-### P2
-
-- Trace response limit tests once a trace cap is introduced:
-  - max entries;
-  - max serialized response size;
-  - explicit truncation marker.
-- Negative tests for non-object `payload`, missing `context.pipelineId`, and malformed JSON body.
-- Public endpoint hardening tests if auth/rate-limit middleware is added.
+- Request-size limit test for the current `2mb` JSON limit.
+- Explicit trace truncation test with low `TRACE_MAX_ENTRIES` in a subprocess.
+- Boot failure tests for missing/invalid snapshot and incompatible `engine.minVersion`.
+- CI Docker smoke with container healthcheck.

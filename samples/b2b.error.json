@@ -1,0 +1,51 @@
+{
+  "context": {
+    "pipelineId": "entrypoints.checkout.b2b",
+    "minOrderAmount": 500,
+    "maxDeferredDays": 30,
+    "largeOrderThreshold": 300000
+  },
+  "payload": {
+    "organization": {
+      "name": "",
+      "inn": "7701234567",
+      "kpp": "123",
+      "legalAddress": "",
+      "contractNumber": ""
+    },
+    "payment": {
+      "method": "CARD",
+      "deferredDays": 45
+    },
+    "order": {
+      "amount": 100,
+      "currency": "USD",
+      "items": [
+        { "sku": "bad", "qty": 0, "price": 100 }
+      ]
+    },
+    "delivery": {
+      "type": "COURIER",
+      "regionCode": "39",
+      "address": ""
+    }
+  },
+  "expect": {
+    "status": "ERROR",
+    "issues": [
+      { "code": "2002", "field": "order.amount", "level": "ERROR" },
+      { "code": "2003", "field": "order.currency", "level": "ERROR" },
+      { "code": "2004", "field": "order.items[0].qty", "level": "ERROR" },
+      { "code": "2005", "field": "order.items[0].sku", "level": "ERROR" },
+      { "code": "4002", "field": "delivery.address", "level": "ERROR" },
+      { "code": "4003", "field": "delivery.regionCode", "level": "ERROR" },
+      { "code": "8001", "field": "organization.name", "level": "ERROR" },
+      { "code": "8002", "field": "organization.inn", "level": "ERROR" },
+      { "code": "8003", "field": "organization.kpp", "level": "ERROR" },
+      { "code": "8004", "field": "organization.legalAddress", "level": "ERROR" },
+      { "code": "8005", "field": "payment.method", "level": "ERROR" },
+      { "code": "8006", "field": "organization.contractNumber", "level": "ERROR" },
+      { "code": "8007", "field": "payment.deferredDays", "level": "ERROR" }
+    ]
+  }
+}

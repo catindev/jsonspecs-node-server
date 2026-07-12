@@ -1,0 +1,46 @@
+{
+  "context": {
+    "pipelineId": "entrypoints.customer.profile",
+    "currentDate": "2026-07-12"
+  },
+  "payload": {
+    "customer": {
+      "name": "",
+      "phone": "",
+      "email": "",
+      "birthDate": "2027-01-01",
+      "preferredChannel": "SMS",
+      "consentGiven": false,
+      "newsletterOptIn": false
+    }
+  },
+  "expect": {
+    "status": "ERROR",
+    "issues": [
+      {
+        "code": "1001",
+        "field": "customer.name",
+        "level": "ERROR"
+      },
+      {
+        "code": "1002",
+        "level": "ERROR"
+      },
+      {
+        "code": "6001",
+        "field": "customer.birthDate",
+        "level": "ERROR"
+      },
+      {
+        "code": "6002",
+        "field": "customer.consentGiven",
+        "level": "ERROR"
+      },
+      {
+        "code": "6004",
+        "field": "customer.phone",
+        "level": "ERROR"
+      }
+    ]
+  }
+}

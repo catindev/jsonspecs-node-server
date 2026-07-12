@@ -1,0 +1,38 @@
+{
+  "context": {
+    "pipelineId": "entrypoints.checkout.b2b",
+    "minOrderAmount": 500,
+    "maxDeferredDays": 30,
+    "largeOrderThreshold": 300000
+  },
+  "payload": {
+    "organization": {
+      "name": "МБОУ СОШ № 27",
+      "inn": "7707083893",
+      "kpp": "770101001",
+      "legalAddress": "Москва, ул. Школьная, д. 1",
+      "contractNumber": "Д-2026-0042"
+    },
+    "payment": {
+      "method": "INVOICE",
+      "deferredDays": 14
+    },
+    "order": {
+      "amount": 128400,
+      "currency": "RUB",
+      "items": [
+        { "sku": "STA-1120", "qty": 300, "price": 428 }
+      ]
+    },
+    "delivery": {
+      "type": "COURIER",
+      "regionCode": "77",
+      "address": "Москва, ул. Школьная, д. 1"
+    }
+  },
+  "expect": {
+    "status": "OK",
+    "exact": true,
+    "issues": []
+  }
+}

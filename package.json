@@ -2,7 +2,7 @@
   "name": "jsonspecs-node-server",
   "version": "0.1.0",
   "private": true,
-  "description": "Snapshot-only Express validation HTTP service for jsonspecs",
+  "description": "Polka checkout snapshot-only demo API for jsonspecs",
   "type": "commonjs",
   "main": "server.js",
   "scripts": {

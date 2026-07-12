@@ -1,0 +1,22 @@
+{
+  "context": {
+    "pipelineId": "entrypoints.customer.profile",
+    "currentDate": "2026-07-12"
+  },
+  "payload": {
+    "customer": {
+      "name": "Иван Петров",
+      "phone": "+79161234567",
+      "email": "ivan@example.com",
+      "birthDate": "1990-04-17",
+      "preferredChannel": "EMAIL",
+      "consentGiven": true,
+      "newsletterOptIn": true
+    }
+  },
+  "expect": {
+    "status": "OK",
+    "exact": true,
+    "issues": []
+  }
+}
