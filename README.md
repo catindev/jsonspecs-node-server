@@ -8,7 +8,8 @@
 - поднимает `POST /v1/validate`;
 - принимает `context` и `payload`;
 - выполняет валидацию через `jsonspecs`;
-- возвращает результат проверки.
+- возвращает результат проверки;
+- по явному запросу возвращает безопасный `basic` trace.
 
 Без UI, без hot reload, без песочницы, без документации.
 
@@ -22,6 +23,8 @@
 ```bash
 npm install
 ```
+
+До публикации `jsonspecs@2.0.0` исходники движка должны находиться в соседнем каталоге `../jsonspecs`. После публикации standalone/deploy checkout может сначала выполнить `npm run deps:registry`, а затем `npm ci`; команда материализует точную версию движка из npm в тот же pinned sibling-каталог.
 
 ## Запуск
 
@@ -71,6 +74,20 @@ PORT=3100 SNAPSHOT_PATH=/absolute/path/to/snapshot.json npm start
 }
 ```
 
+Для безопасного диагностического trace добавь верхнеуровневое поле:
+
+```json
+{
+  "trace": "basic",
+  "context": {
+    "pipelineId": "entrypoints.fl_resident.full_validation"
+  },
+  "payload": {}
+}
+```
+
+Допустимы только `false` и `"basic"`. Режим `verbose` через HTTP API намеренно недоступен, поскольку может раскрыть значения payload. По умолчанию поле `trace` в ответе отсутствует.
+
 #### Response
 
 ```json
@@ -95,6 +112,14 @@ PORT=3100 SNAPSHOT_PATH=/absolute/path/to/snapshot.json npm start
   ]
 }
 ```
+
+HTTP status отражает только обработку запроса движком:
+
+- `200` — движок вернул обычный результат (`OK`, `WARNING` или `ERROR`);
+- `400` — некорректный JSON или контракт HTTP-запроса;
+- `500` — движок вернул `ABORT` либо сервер не смог выполнить запрос.
+
+При `ABORT` тело сохраняет структурированный runtime result с `status: "ABORT"`, `control: "STOP"` и стабильным `error.code`.
 
 ## Healthcheck
 
@@ -157,17 +182,6 @@ SNAPSHOT_PATH=/absolute/path/to/snapshot.json
 
 ```text
 3000
-```
-
-### `TRACE`
-
-Опциональная. Если `TRACE=1`, сервис оставляет trace в ответе.
-Если не задано, trace вырезается из ответа.
-
-Пример:
-
-```bash
-TRACE=1 SNAPSHOT_PATH=/absolute/path/to/snapshot.json npm start
 ```
 
 ## Минимальный сценарий запуска

@@ -5,7 +5,6 @@ const { createEngine, formatDiagnostics } = require("jsonspecs");
 const { Operators } = require("./lib/operators");
 
 const PORT = Number(process.env.PORT || 3000);
-const TRACE = process.env.TRACE === "1";
 const SNAPSHOT_PATH = process.env.SNAPSHOT_PATH || path.join(__dirname, "snapshot.json");
 
 function failBoot(message) {
@@ -72,10 +71,13 @@ function validateRequest(body) {
   if (body.payload !== undefined && (typeof body.payload !== "object" || body.payload === null || Array.isArray(body.payload))) {
     return '"payload" must be an object if provided';
   }
+  if (body.trace !== undefined && body.trace !== false && body.trace !== "basic") {
+    return '"trace" must be false or "basic" if provided';
+  }
   return null;
 }
 
-function createApp({ engine, compiled, meta }) {
+function createApp({ engine, compiled }) {
   const app = express();
 
   app.use(express.json({ limit: "2mb" }));
@@ -88,7 +90,7 @@ function createApp({ engine, compiled, meta }) {
   });
 
   app.get("/health", (_req, res) => {
-    res.json({ ok: true, ...meta });
+    res.json({ ok: true });
   });
 
   app.post("/v1/validate", (req, res) => {
@@ -100,10 +102,11 @@ function createApp({ engine, compiled, meta }) {
     const context = req.body.context;
     const payload = req.body.payload ?? {};
     try {
-      const result = engine.runPipeline(compiled, { pipelineId: context.pipelineId, payload, context }, { trace: TRACE ? 'verbose' : false });
+      const trace = req.body.trace === "basic" ? "basic" : false;
+      const result = engine.runPipeline(compiled, { pipelineId: context.pipelineId, payload, context }, { trace });
       const response = { context, ...result };
 
-      return res.json(response);
+      return res.status(result.status === "ABORT" ? 500 : 200).json(response);
     } catch (error) {
       return res.status(500).json({
         error: true,

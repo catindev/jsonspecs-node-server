@@ -8,13 +8,19 @@
   "scripts": {
     "start": "node server.js",
     "dev": "PORT=3000 SNAPSHOT_PATH=./snapshot.json node server.js",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "deps:registry": "node scripts/materialize-jsonspecs.js",
+    "preinstall": "node scripts/check-jsonspecs-source.js"
+  },
+  "config": {
+    "jsonspecsVersion": "2.0.0",
+    "jsonspecsGitRef": "cef98ac364d9809e4c49135566924d25fefa4fe2"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
     "express": "^5.2.1",
-    "jsonspecs": "^2.0.0"
+    "jsonspecs": "file:../jsonspecs"
   }
 }
