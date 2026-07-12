@@ -13,8 +13,8 @@
     "preinstall": "node scripts/check-jsonspecs-source.js"
   },
   "config": {
-    "jsonspecsVersion": "2.0.0",
-    "jsonspecsGitRef": "v2.0.0"
+    "jsonspecsVersion": "2.1.0",
+    "jsonspecsGitRef": "v2.1.0"
   },
   "engines": {
     "node": ">=20"
