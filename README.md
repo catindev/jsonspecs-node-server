@@ -1,17 +1,17 @@
 # JSONSpecs Node Server
 
-Минимальный backend validation service на Node.js для запуска `jsonspecs` **только через готовый snapshot**.
+Минимальный snapshot-only HTTP validation service на Node.js для запуска готового `jsonspecs` snapshot.
 
 Сервис:
 
-- загружает snapshot при старте;
+- загружает `snapshot.json` при старте;
+- проверяет snapshot через `jsonspecs.compileSnapshot()`;
 - поднимает `POST /v1/validate`;
 - принимает `context` и `payload`;
-- выполняет валидацию через `jsonspecs`;
-- возвращает результат проверки;
+- возвращает transport-safe runtime result движка;
 - по явному запросу возвращает безопасный `basic` trace.
 
-Без UI, без hot reload, без песочницы, без документации.
+Без UI, без hot reload, без чтения исходных правил, без генерации документации.
 
 ## Требования
 
@@ -20,23 +20,82 @@
 
 ## Установка
 
+Для локальной разработки рядом должен быть checkout `../jsonspecs`, потому что исходный `package.json` использует sibling dependency:
+
 ```bash
+git clone https://github.com/catindev/jsonspecs.git
+git clone https://github.com/catindev/jsonspecs-node-server.git
+cd jsonspecs-node-server
 npm install
 ```
 
-До публикации `jsonspecs@2.0.0` исходники движка должны находиться в соседнем каталоге `../jsonspecs`. После публикации standalone/deploy checkout может сначала выполнить `npm run deps:registry`, а затем `npm ci`; команда материализует точную версию движка из npm в тот же pinned sibling-каталог.
+Для standalone/deploy checkout можно материализовать pinned engine из npm:
 
-## Запуск
+```bash
+npm run deps:registry
+npm ci
+```
 
-Нужно передать путь к snapshot через переменную окружения `SNAPSHOT_PATH`.
+Версия движка зафиксирована в `package.json`:
 
-Пример:
+```json
+{
+  "config": {
+    "jsonspecsVersion": "2.1.1",
+    "jsonspecsGitRef": "v2.1.1"
+  }
+}
+```
+
+## Snapshot
+
+Сервис работает только с готовым snapshot, собранным заранее через `jsonspecs-cli build`.
+
+Здесь не происходит:
+
+- компиляции rules project из `rules/`;
+- чтения `manifest.json`;
+- загрузки исходных правил из репозитория правил;
+- rebuild при изменениях файлов.
+
+По умолчанию используется встроенный `./snapshot.json`. Другой snapshot можно подключить через `SNAPSHOT_PATH`:
 
 ```bash
 SNAPSHOT_PATH=/absolute/path/to/snapshot.json npm start
 ```
 
-Если хочешь запустить на другом порту:
+Snapshot должен иметь нормативную форму:
+
+```json
+{
+  "format": "jsonspecs-snapshot",
+  "formatVersion": 1,
+  "sourceHash": "...",
+  "engine": { "minVersion": "2.1.1" },
+  "artifacts": [],
+  "meta": {
+    "projectId": "nominal-beneficiaries-rules",
+    "projectTitle": "Бенефициары ном. счетов (FL_RESIDENT)",
+    "rulesetVersion": "1.0.0"
+  }
+}
+```
+
+При старте сервер проверяет формат, hash и engine compatibility через `compileSnapshot()`. Если snapshot невалиден, процесс не стартует.
+
+## Запуск
+
+```bash
+npm start
+```
+
+С другим snapshot:
+
+```bash
+SNAPSHOT_PATH=/absolute/path/to/snapshot.json npm start
+```
+
+С другим портом:
 
 ```bash
 PORT=3100 SNAPSHOT_PATH=/absolute/path/to/snapshot.json npm start
@@ -44,42 +103,33 @@ PORT=3100 SNAPSHOT_PATH=/absolute/path/to/snapshot.json npm start
 
 ## Docker и Coolify
 
-Репозиторий содержит production Dockerfile, который при сборке материализует точную версию `jsonspecs` из npm и сохраняет sibling-layout внутри образа.
+Репозиторий содержит production Dockerfile. Во время сборки он материализует точную версию `jsonspecs` из npm и сохраняет sibling-layout внутри образа.
 
-Локальный запуск образа:
+Локальная сборка и запуск:
 
 ```bash
 docker build -t jsonspecs-node-server .
 docker run --rm -p 3000:3000 jsonspecs-node-server
 ```
 
-Для Coolify выбери Public Repository, ветку `main`, build pack `Dockerfile`, порт `3000` и healthcheck path `/health`. Встроенный `snapshot.json` используется по умолчанию; другой snapshot можно подключить через `SNAPSHOT_PATH`.
+Для Coolify:
 
-## Что должен содержать snapshot
+- source: Public Repository;
+- branch: `main`;
+- build pack: Dockerfile;
+- port: `3000`;
+- healthcheck path: `/health`.
 
-Сервис работает только с **готовым snapshot**, собранным заранее через `jsonspecs-cli`.
-
-То есть здесь не происходит:
-
-- компиляции rules project;
-- сборки manifest;
-- чтения исходных правил из repo.
-
-Сервис использует только итоговый build artifact.
+Встроенный `snapshot.json` используется по умолчанию. Если нужен внешний snapshot, передай `SNAPSHOT_PATH`.
 
 ## Endpoint
 
 ### POST `/v1/validate`
 
-#### Request
+Request:
 
 ```json
 {
-  "ruleset": {
-    "projectId": "nominal-beneficiaries-rules",
-    "rulesetVersion": "1.0.0",
-    "sourceHash": "d9444d0733786696aaa2e98f6bfae4fedd5804a0b65c36b13645cab1df46c9a5"
-  },
   "context": {
     "pipelineId": "entrypoints.fl_resident.full_validation",
     "currentDate": "2026-03-29"
@@ -91,6 +141,8 @@ docker run --rm -p 3000:3000 jsonspecs-node-server
   }
 }
 ```
+
+`context.pipelineId` обязателен. `payload` опционален, но если передан, должен быть JSON object. Request body ограничен Express-лимитом `2mb`.
 
 Для безопасного диагностического trace добавь верхнеуровневое поле:
 
@@ -104,9 +156,9 @@ docker run --rm -p 3000:3000 jsonspecs-node-server
 }
 ```
 
-Допустимы только `false` и `"basic"`. Режим `verbose` через HTTP API намеренно недоступен, поскольку может раскрыть значения payload. По умолчанию поле `trace` в ответе отсутствует.
+Допустимы только `false` и `"basic"`. Режим `"verbose"` через HTTP API намеренно недоступен, потому что может раскрыть значения payload. По умолчанию поля `trace` в ответе нет.
 
-#### Response
+Response:
 
 ```json
 {
@@ -127,29 +179,32 @@ docker run --rm -p 3000:3000 jsonspecs-node-server
       "expected": "^\\d{12}$",
       "actual": "1234567890470"
     }
-  ]
+  ],
+  "ruleset": {
+    "sourceHash": "d9444d0733786696aaa2e98f6bfae4fedd5804a0b65c36b13645cab1df46c9a5",
+    "rulesetVersion": "1.0.0",
+    "projectId": "nominal-beneficiaries-rules"
+  }
 }
 ```
 
-HTTP status отражает только обработку запроса движком:
+HTTP status отражает обработку запроса, а не бизнес-успешность проверки:
 
-- `200` — движок вернул обычный результат (`OK`, `WARNING` или `ERROR`);
-- `400` — некорректный JSON или контракт HTTP-запроса;
+- `200` — движок вернул обычный runtime result: `OK`, `OK_WITH_WARNINGS`, `ERROR` или `EXCEPTION`;
+- `400` — невалидный JSON или нарушение HTTP request contract;
 - `500` — движок вернул `ABORT` либо сервер не смог выполнить запрос.
 
-При `ABORT` тело сохраняет структурированный runtime result с `status: "ABORT"`, `control: "STOP"` и стабильным `error.code`.
+При `ABORT` тело сохраняет структурированный result с `status: "ABORT"`, `control: "STOP"` и стабильным `error.code`.
 
 ## Healthcheck
 
 ### GET `/health`
 
-Быстрая проверка, что сервис поднят:
-
 ```bash
 curl http://localhost:3000/health
 ```
 
-Пример ответа:
+Ответ:
 
 ```json
 {
@@ -157,22 +212,21 @@ curl http://localhost:3000/health
 }
 ```
 
-## Быстрая проверка через файл `payload.json`
+## Быстрая проверка через `payload.json`
 
-Если в `payload.json` у тебя уже лежит полный request с обоими полями:
+Если в `payload.json` лежит полный request:
 
-- `context`
-- `payload`
-
-то проверить можно так:
-
-```bash
-curl -X POST http://localhost:3000/v1/validate \
-  -H 'Content-Type: application/json' \
-  --data-binary @payload.json
+```json
+{
+  "context": {
+    "pipelineId": "entrypoints.fl_resident.full_validation",
+    "currentDate": "2026-03-29"
+  },
+  "payload": {}
+}
 ```
 
-Если хочешь красивый вывод:
+Запуск:
 
 ```bash
 curl -s -X POST http://localhost:3000/v1/validate \
@@ -180,65 +234,43 @@ curl -s -X POST http://localhost:3000/v1/validate \
   --data-binary @payload.json | jq
 ```
 
-## Полезные переменные окружения
+## Переменные окружения
 
-### `SNAPSHOT_PATH`
+| Variable | Default | Description |
+| --- | --- | --- |
+| `SNAPSHOT_PATH` | `./snapshot.json` | Путь к snapshot-файлу. |
+| `PORT` | `3000` | HTTP port. |
 
-Обязательная. Путь к snapshot-файлу.
-
-Пример:
-
-```bash
-SNAPSHOT_PATH=/absolute/path/to/snapshot.json
-```
-
-### `PORT`
-
-Опциональная. Порт HTTP-сервера.
-
-По умолчанию:
-
-```text
-3000
-```
-
-## Минимальный сценарий запуска
-
-### 1. Установить зависимости
+## Тесты
 
 ```bash
-npm install
+npm test
 ```
 
-### 2. Запустить сервер со snapshot
+Тесты проверяют:
 
-```bash
-SNAPSHOT_PATH=/absolute/path/to/snapshot.json npm start
-```
+- согласованность `snapshot.json` и `build-info.json`;
+- boot нормативного snapshot;
+- `/health`;
+- `/v1/validate`;
+- отсутствие trace по умолчанию;
+- ruleset provenance в ответе;
+- `ABORT` как HTTP 500;
+- запрет `verbose` trace;
+- отсутствие raw payload values в `basic` trace;
+- custom identifier operators через `ctx.get()`.
 
-### 3. Проверить health
-
-```bash
-curl http://localhost:3000/health
-```
-
-### 4. Отправить тестовый payload
-
-```bash
-curl -X POST http://localhost:3000/v1/validate \
-  -H 'Content-Type: application/json' \
-  --data-binary @payload.json
-```
+Текущее покрытие и рекомендуемые доработки тестов зафиксированы в [TESTING.md](./TESTING.md).
 
 ## Ограничения текущей версии
 
-Этот сервис специально сделан минимальным:
+Сервис намеренно минимальный:
 
-- только snapshot runtime;
-- только один validation endpoint;
+- один snapshot на процесс;
+- один validation endpoint;
 - без auth;
 - без persistence;
-- без docs;
-- без live rebuild.
+- без live rebuild;
+- без UI.
 
-Его задача быть тонкой production-like обёрткой над Node runtime.
+Если endpoint открывается наружу, добавь внешний auth/rate limit и подумай о лимите размера trace response.

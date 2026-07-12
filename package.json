@@ -2,7 +2,7 @@
   "name": "jsonspecs-node-server",
   "version": "0.1.0",
   "private": true,
-  "description": "Minimal snapshot-only Express validation service for jsonspecs",
+  "description": "Snapshot-only Express validation HTTP service for jsonspecs",
   "type": "commonjs",
   "main": "server.js",
   "scripts": {
@@ -13,8 +13,8 @@
     "preinstall": "node scripts/check-jsonspecs-source.js"
   },
   "config": {
-    "jsonspecsVersion": "2.1.0",
-    "jsonspecsGitRef": "v2.1.0"
+    "jsonspecsVersion": "2.1.1",
+    "jsonspecsGitRef": "v2.1.1"
   },
   "engines": {
     "node": ">=20"
