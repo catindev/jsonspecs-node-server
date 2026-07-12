@@ -1,5 +1,8 @@
 {
-  "version": "1",
+  "format": "jsonspecs-snapshot",
+  "formatVersion": 1,
+  "sourceHash": "d9444d0733786696aaa2e98f6bfae4fedd5804a0b65c36b13645cab1df46c9a5",
+  "engine": { "minVersion": "2.0.0" },
   "createdAt": "2026-03-30T06:27:45.215Z",
   "createdBy": "vladimirtitskiy",
   "description": "Пакет правил проверок заявок на регистрацию бенефициаров номинальных счетов. В этом наборе пока чтто есть только стартовый пакет правил для профиля FL_RESIDENT. Пакет рассчитан как новая база для дальнейшего развития остальных профилей",

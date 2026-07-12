@@ -1,7 +1,7 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
-const { createEngine } = require("jsonspecs");
+const { createEngine, formatDiagnostics } = require("jsonspecs");
 const { Operators } = require("./lib/operators");
 
 const PORT = Number(process.env.PORT || 3000);
@@ -39,7 +39,9 @@ function loadSnapshot(snapshotPath) {
 function bootstrap(snapshotPath) {
   const snapshot = loadSnapshot(snapshotPath);
   const engine = createEngine({ operators: Operators });
-  const compiled = engine.compile(snapshot.artifacts);
+  let compiled;
+  try { compiled = engine.compileSnapshot(snapshot); }
+  catch (error) { failBoot(`Snapshot validation failed: ${error.diagnostics ? formatDiagnostics(error.diagnostics) : error.message}`); }
 
   return {
     engine,
@@ -47,12 +49,12 @@ function bootstrap(snapshotPath) {
     meta: {
       mode: "snapshot",
       snapshotPath,
-      version: snapshot.version || null,
-      createdAt: snapshot.createdAt || null,
-      createdBy: snapshot.createdBy || null,
-      description: snapshot.description || null,
-      artifactCount: snapshot.artifactCount || snapshot.artifacts.length,
-      manifest: snapshot.manifest || null,
+      format: snapshot.format,
+      formatVersion: snapshot.formatVersion,
+      sourceHash: snapshot.sourceHash,
+      description: snapshot.meta && snapshot.meta.description || null,
+      artifactCount: snapshot.artifacts.length,
+      project: snapshot.meta || null,
     },
   };
 }
@@ -97,16 +99,10 @@ function createApp({ engine, compiled, meta }) {
 
     const context = req.body.context;
     const payload = req.body.payload ?? {};
-    const enrichedPayload = { ...payload, __context: context };
-
     try {
-      const result = engine.runPipeline(compiled, context.pipelineId, enrichedPayload);
+      const result = engine.runPipeline(compiled, { pipelineId: context.pipelineId, payload, context }, { trace: TRACE ? 'verbose' : false });
       const response = { context, ...result };
 
-      if (!TRACE && response.trace) {
-        const { trace, ...rest } = response;
-        return res.json(rest);
-      }
       return res.json(response);
     } catch (error) {
       return res.status(500).json({
@@ -126,7 +122,7 @@ function start() {
   app.listen(PORT, () => {
     console.log(`[jsonspecs-node-server] listening on :${PORT}`);
     console.log(`[jsonspecs-node-server] snapshot      : ${runtime.meta.snapshotPath}`);
-    console.log(`[jsonspecs-node-server] version       : ${runtime.meta.version || "n/a"}`);
+    console.log(`[jsonspecs-node-server] snapshot      : v${runtime.meta.formatVersion}`);
     console.log(`[jsonspecs-node-server] artifacts     : ${runtime.meta.artifactCount}`);
   });
 }
