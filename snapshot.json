@@ -3,7 +3,7 @@
   "formatVersion": 1,
   "sourceHash": "d9444d0733786696aaa2e98f6bfae4fedd5804a0b65c36b13645cab1df46c9a5",
   "engine": {
-    "minVersion": "2.0.0"
+    "minVersion": "2.1.0"
   },
   "artifacts": [
     {
@@ -2526,6 +2526,7 @@
   ],
   "meta": {
     "projectId": "nominal-beneficiaries-rules",
+    "rulesetVersion": "1.0.0",
     "projectTitle": "Бенефициары ном. счетов (FL_RESIDENT)",
     "description": "Пакет правил проверок заявок на регистрацию бенефициаров номинальных счетов. В этом наборе пока чтто есть только стартовый пакет правил для профиля FL_RESIDENT. Пакет рассчитан как новая база для дальнейшего развития остальных профилей"
   }

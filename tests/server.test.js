@@ -49,6 +49,7 @@ test("snapshot and build-info describe the same build", () => {
   assert.equal(buildInfo.artifactCount, snapshot.artifacts.length);
   assert.equal(buildInfo.projectId, snapshot.meta.projectId);
   assert.equal(buildInfo.projectTitle, snapshot.meta.projectTitle);
+  assert.equal(buildInfo.rulesetVersion, snapshot.meta.rulesetVersion);
   assert.equal(Object.hasOwn(snapshot, "createdAt"), false);
   assert.equal(Object.hasOwn(snapshot, "createdBy"), false);
   assert.equal(Object.hasOwn(snapshot, "manifest"), false);
@@ -72,6 +73,11 @@ test("boots the normative snapshot and validates a request", async (t) => {
   const result = await response.json();
   assert.equal(result.control, "STOP");
   assert.equal(Object.hasOwn(result, "trace"), false);
+  assert.deepEqual(result.ruleset, {
+    sourceHash: snapshot.sourceHash,
+    rulesetVersion: snapshot.meta.rulesetVersion,
+    projectId: snapshot.meta.projectId,
+  });
   assert.deepEqual(JSON.parse(JSON.stringify(result)), result);
 });
 

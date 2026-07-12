@@ -75,6 +75,11 @@ docker run --rm -p 3000:3000 jsonspecs-node-server
 
 ```json
 {
+  "ruleset": {
+    "projectId": "nominal-beneficiaries-rules",
+    "rulesetVersion": "1.0.0",
+    "sourceHash": "d9444d0733786696aaa2e98f6bfae4fedd5804a0b65c36b13645cab1df46c9a5"
+  },
   "context": {
     "pipelineId": "entrypoints.fl_resident.full_validation",
     "currentDate": "2026-03-29"
