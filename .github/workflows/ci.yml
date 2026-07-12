@@ -36,3 +36,34 @@ jobs:
           cache-dependency-path: jsonspecs-node-server/package-lock.json
       - run: npm ci
       - run: npm test
+
+  docker-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout demo server
+        uses: actions/checkout@v4
+        with:
+          path: jsonspecs-node-server
+      - name: Build production image
+        run: docker build --tag jsonspecs-node-server:ci jsonspecs-node-server
+      - name: Start production image
+        run: docker run --detach --name jsonspecs-node-server-ci --publish 127.0.0.1:3000:3000 jsonspecs-node-server:ci
+      - name: Verify health and engine version
+        run: |
+          for attempt in {1..30}; do
+            if curl --fail --silent --show-error http://127.0.0.1:3000/health > /tmp/jsonspecs-health.json; then
+              break
+            fi
+            sleep 1
+          done
+          test "$(cat /tmp/jsonspecs-health.json)" = '{"ok":true}'
+          expected="$(node -p 'require("./jsonspecs-node-server/package.json").config.jsonspecsVersion')"
+          actual="$(docker exec jsonspecs-node-server-ci node -p 'require("jsonspecs/package.json").version')"
+          test "$actual" = "$expected"
+          test "$(docker exec jsonspecs-node-server-ci node -p 'require("node:fs").readlinkSync("node_modules/jsonspecs")')" = '../../jsonspecs'
+      - name: Show container logs on failure
+        if: failure()
+        run: docker logs jsonspecs-node-server-ci || true
+      - name: Stop production image
+        if: always()
+        run: docker rm --force jsonspecs-node-server-ci || true
