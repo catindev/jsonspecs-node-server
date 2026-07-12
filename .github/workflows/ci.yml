@@ -57,6 +57,7 @@ jobs:
             sleep 1
           done
           test "$(cat /tmp/jsonspecs-health.json)" = '{"ok":true}'
+          test "$(docker exec jsonspecs-node-server-ci curl --fail --silent --show-error http://127.0.0.1:3000/health)" = '{"ok":true}'
           expected="$(node -p 'require("./jsonspecs-node-server/package.json").config.jsonspecsVersion')"
           actual="$(docker exec jsonspecs-node-server-ci node -p 'require("jsonspecs/package.json").version')"
           test "$actual" = "$expected"
