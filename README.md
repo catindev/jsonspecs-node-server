@@ -42,6 +42,19 @@ SNAPSHOT_PATH=/absolute/path/to/snapshot.json npm start
 PORT=3100 SNAPSHOT_PATH=/absolute/path/to/snapshot.json npm start
 ```
 
+## Docker и Coolify
+
+Репозиторий содержит production Dockerfile, который при сборке материализует точную версию `jsonspecs` из npm и сохраняет sibling-layout внутри образа.
+
+Локальный запуск образа:
+
+```bash
+docker build -t jsonspecs-node-server .
+docker run --rm -p 3000:3000 jsonspecs-node-server
+```
+
+Для Coolify выбери Public Repository, ветку `main`, build pack `Dockerfile`, порт `3000` и healthcheck path `/health`. Встроенный `snapshot.json` используется по умолчанию; другой snapshot можно подключить через `SNAPSHOT_PATH`.
+
 ## Что должен содержать snapshot
 
 Сервис работает только с **готовым snapshot**, собранным заранее через `jsonspecs-cli`.
